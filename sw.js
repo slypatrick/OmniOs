@@ -1,0 +1,145 @@
+const SHELL_CACHE='second-brain-shell-v12';
+const USER_ASSET_CACHE='omnios-user-assets-v1';
+const SNAPSHOT_PREFIX='omnios-app-snapshot-v1-';
+const CORE=[
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './icons/icon-180.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
+  './pwa-personalization.js',
+  './styles/omnios-ux-foundation.css',
+  './styles/omnios-ux-phase02.css',
+  './js/omnios-navigation-phase02.js',
+  './js/omnios-today-phase03.js',
+  './styles/omnios-ux-phase03.css',
+  './styles/omnios-ux-phase04.css',
+  './styles/omnios-ux-phase05.css',
+  './js/omnios-calendar-phase05.js',
+  './styles/omnios-ux-phase06.css',
+  './js/omnios-life-hub-phase06.js',
+  './js/omnios-modules-phase07.js',
+  './styles/omnios-ux-phase07.css',
+  './js/omnios-capture-phase04.js'
+];
+
+self.addEventListener('install',event=>{
+  self.skipWaiting();
+  event.waitUntil((async()=>{
+    const cache=await caches.open(SHELL_CACHE);
+    await cache.addAll(CORE);
+  })());
+});
+
+self.addEventListener('activate',event=>{
+  event.waitUntil((async()=>{
+    for(const key of await caches.keys()){
+      if(key.startsWith('second-brain-shell-')&&key!==SHELL_CACHE)await caches.delete(key);
+    }
+    await self.clients.claim();
+  })());
+});
+
+async function userIconResponse(request){
+  const userCache=await caches.open(USER_ASSET_CACHE);
+  const custom=await userCache.match(request,{ignoreSearch:true});
+  if(custom)return custom;
+  const shell=await caches.open(SHELL_CACHE);
+  return (await shell.match('./icons/icon-192.png'))||(await fetch('./icons/icon-192.png',{cache:'no-cache'}));
+}
+
+function isAppPart(url){
+  return /\/app-parts\/part-\d{3}\.html$/.test(url.pathname);
+}
+function bypassCache(request,url){
+  return url.pathname.startsWith('/api/')||url.pathname.startsWith('/.netlify/functions/')||request.headers?.has?.('authorization')||request.headers?.has?.('x-api-key');
+}
+
+function canCache(request,response){
+  if(!response||!response.ok||response.type==='opaque')return false;
+  const policy=(response.headers.get('cache-control')||'').toLowerCase();
+  if(/(?:^|[,\s])(?:private|no-store)(?:[,\s=]|$)/.test(policy))return false;
+  const type=(response.headers.get('content-type')||'').toLowerCase();
+  if(request.mode==='navigate')return type.includes('text/html');
+  if(request.destination==='manifest')return type.includes('application/manifest+json')||type.includes('application/json');
+  if(request.destination==='script')return type.includes('javascript')||type.includes('text/plain');
+  if(request.destination==='image')return type.startsWith('image/');
+  return true;
+}
+
+self.addEventListener('fetch',event=>{
+  if(event.request.method!=='GET')return;
+  const url=new URL(event.request.url);
+  if(url.origin!==self.location.origin||bypassCache(event.request,url))return;
+
+  // App fragments are owned by index.html's validated two-slot snapshot loader.
+  // Do not add a second, independent caching layer here.
+  if(isAppPart(url)||/\/app\.[a-f0-9]+\.html$/.test(url.pathname)||url.pathname.endsWith('/release.json'))return;
+
+  if(url.pathname.endsWith('/omnios-user-icon-192.png')){
+    event.respondWith(userIconResponse(event.request));
+    return;
+  }
+
+  event.respondWith((async()=>{
+    const shell=await caches.open(SHELL_CACHE);
+    try{
+      const fresh=await fetch(event.request,{cache:'no-cache'});
+      if(canCache(event.request,fresh)){
+        try{await shell.put(event.request,fresh.clone())}catch(_){}
+      }
+      return fresh;
+    }catch(_){
+      const cached=event.request.mode==='navigate'
+        ? await shell.match('./index.html')
+        : await shell.match(event.request,{ignoreSearch:event.request.destination==='script'});
+      return cached||Response.error();
+    }
+  })());
+});
+
+self.addEventListener('push',event=>{
+  let data={};
+  try{data=event.data?.json?.()||{}}catch(_){
+    try{data={body:event.data?.text?.()||''}}catch(__){}
+  }
+  const title=data.title||'Second Brain reminder';
+  const options={
+    body:data.body||'You have something scheduled in Second Brain.',
+    icon:'./omnios-user-icon-192.png',
+    badge:'./icons/icon-192.png',
+    tag:data.tag||'omnios-reminder',
+    renotify:false,
+    data:{view:data.view||'reminders',url:data.url||''}
+  };
+  event.waitUntil((async()=>{
+    await self.registration.showNotification(title,options);
+    try{await self.navigator?.setAppBadge?.(1)}catch(_){}
+  })());
+});
+
+self.addEventListener('notificationclick',event=>{
+  event.notification.close();
+  const view=event.notification.data?.view||'';
+  const explicitUrl=event.notification.data?.url||'';
+  event.waitUntil((async()=>{
+    try{await self.navigator?.clearAppBadge?.()}catch(_){}
+    const list=await clients.matchAll({type:'window',includeUncontrolled:true});
+    for(const client of list){
+      if('focus' in client){
+        await client.focus();
+        if(view)client.postMessage({type:'OMNIOS_OPEN_VIEW',view});
+        return;
+      }
+    }
+    const target=explicitUrl||('./index.html'+(view?'#'+encodeURIComponent(view):''));
+    await clients.openWindow(target);
+  })());
+});
+
+self.addEventListener('message',event=>{
+  if(event.data?.type==='OMNIOS_SKIP_WAITING')self.skipWaiting();
+});

@@ -1,0 +1,214 @@
+/* Phase 07 — consistent module surfaces, no legacy renderer replacement. */
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes){min-width:0}
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(.workout-hero,.nut-hero,.finance-hero,.omx-page-heading,.habit-toolbar,.notes-toolbar){min-width:0;max-width:100%}
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(.workout-hero-actions,.nut-hero-actions,.finance-hero-actions,.toolbar-group,.notes-toolbar){min-width:0;gap:8px;flex-wrap:wrap}
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(.workout-hero h3,.nut-title,.finance-hero h3,.omx-page-heading h3){overflow-wrap:anywhere;line-height:1.25}
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(input,select,textarea){min-width:0;max-width:100%}
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(button,[role="button"],input,select,textarea):focus-visible{
+ outline:2px solid var(--omx-focus,var(--accent-cyan,#06b6d4))!important;
+ outline-offset:2px;
+}
+html #view-workout .workout-tabs,
+html #view-diet .nut-tabs{
+ display:flex;max-width:100%;min-width:0;overflow-x:auto;overscroll-behavior-x:contain;
+ gap:5px;scrollbar-width:thin;padding-bottom:4px;
+}
+html #view-workout .workout-tabs>[data-workout-tab],
+html #view-diet .nut-tabs>[data-nut-tab]{flex:0 0 auto;white-space:nowrap;min-height:40px}
+html #view-workout :is(.workout-kpi-grid,.workout-session-card){min-width:0}
+html #view-diet :is(.nut-shell,.nut-surface,.nut-content,.nut-card,.nut-card-heading){min-width:0}
+html #view-diet :is(.nut-card-title,.nut-card-sub){overflow-wrap:anywhere}
+html #view-budget :is(.finance-workspace,.finance-card,.finance-hero-copy,.finance-period-nav){min-width:0}
+html #view-budget .finance-hero-actions{display:flex;gap:8px;flex-wrap:wrap}
+html #view-habits :is(.habit-summary-grid,#habits-container,.v34-habit-month-shell){min-width:0}
+html #view-notes .notes-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+html #view-notes .notes-toolbar #notes-search{flex:1 1 200px;min-width:0;width:auto}
+html #view-notes .notes-toolbar #notes-sort{min-width:130px;flex:0 1 auto}
+html #view-notes .notes-grid{min-width:0}
+@media(max-width:760px){
+ html #view-workout .workout-hero,
+ html #view-diet .nut-hero,
+ html #view-budget .finance-hero{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+ html #view-workout .workout-hero-actions,
+ html #view-diet .nut-hero-actions,
+ html #view-budget .finance-hero-actions{display:flex;flex-wrap:wrap;width:100%}
+ html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+ :is(.btn,.view-btn,.nut-tab,.icon-btn){min-height:40px}
+ html #view-diet .nut-tabs>[data-nut-tab],
+ html #view-workout .workout-tabs>[data-workout-tab]{min-height:44px}
+ html #view-notes .notes-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ html #view-notes .notes-toolbar #notes-search{grid-column:1 / -1;min-height:44px;width:100%}
+ html #view-notes .notes-toolbar #notes-sort{grid-column:1 / -1;min-height:44px;width:100%}
+ html #view-habits .habit-toolbar{gap:8px}
+ html #view-habits .habit-toolbar .toolbar-group{max-width:100%;min-width:0}
+ html #view-habits :is([data-habitview],.omx-page-heading .btn){min-height:44px}
+ html #view-budget .finance-period-nav{max-width:100%;display:flex;gap:5px;align-items:center}
+ html #view-budget .finance-month-label{min-width:0;overflow:hidden;text-overflow:ellipsis}
+}
+@media(max-width:375px){
+ html #view-notes .notes-toolbar{gap:6px}
+ html #view-diet .nut-hero-actions>.btn{flex:1 1 auto}
+ html #view-workout .workout-hero-actions>.btn{flex:1 1 auto}
+}
+
+/* Canonical Finance V38 and Notes V40 own the visible modules. Legacy controls stay hidden. */
+html #view-budget.v38-finance-active #finance-v38-root,
+html #view-notes .org-shell{min-width:0;max-width:100%}
+html #view-budget .v38-finance-head,
+html #view-budget .v38-finance-head-actions,
+html #view-notes .org-hero,
+html #view-notes .org-toolbar{min-width:0;max-width:100%;gap:8px}
+html #view-budget .v38-finance-head-actions{display:flex;flex-wrap:wrap;align-items:center}
+html #view-budget .v38-month-nav{min-width:0;max-width:100%}
+html #view-budget .v38-fin-tabs{max-width:100%;min-width:0;overflow-x:auto}
+html #view-notes .org-toolbar #org-note-search{min-width:0;max-width:100%}
+html #view-notes .org-toolbar #org-note-sort{min-width:0;max-width:100%}
+@media(max-width:760px){
+ html #view-budget .v38-finance-head{display:flex;flex-direction:column;align-items:stretch;gap:10px}
+ html #view-budget .v38-finance-head-actions{display:flex;align-items:stretch;width:100%;gap:7px}
+ html #view-budget .v38-month-nav{flex:1 1 100%;justify-content:space-between;min-width:0}
+ html #view-budget #v38-add-txn{min-height:44px}
+ html #view-budget .v38-fin-tab{min-height:44px}
+ html #view-notes .org-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ html #view-notes .org-toolbar #org-note-search,
+ html #view-notes .org-toolbar #org-note-sort{grid-column:1/-1;width:100%;min-height:44px}
+ html #view-notes .org-toolbar .org-seg{grid-column:1/-1;display:flex;max-width:100%;min-width:0;width:100%;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
+ html #view-notes .org-toolbar .org-seg>[data-org-view]{flex:1 0 auto;white-space:nowrap;min-height:44px}
+ html #view-notes #org-note-new{min-height:44px}
+}
+
+/* The V40 Notes hero has five existing actions; wrap instead of clipping New Note. */
+@media(max-width:760px){
+ html #view-notes .org-hero{display:flex;flex-direction:column;align-items:stretch;min-width:0}
+ html #view-notes .org-hero-main{min-width:0;max-width:100%}
+ html #view-notes .org-hero .org-actions{
+   display:flex;flex-wrap:wrap!important;justify-content:flex-start;align-items:center;
+   gap:6px;width:100%;min-width:0;max-width:100%;overflow:visible;
+ }
+ html #view-notes .org-hero .org-actions>button{
+   flex:1 1 auto;min-width:0;min-height:42px;white-space:normal;
+ }
+}
+
+/* UX Phase 10.3: align REAL module headers and forms with Phase 10 design
+   aliases. Styling only: never replace the existing markup or save handlers. */
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(.workout-hero,.nut-hero,.finance-hero,.v38-finance-head,.org-hero,.habit-toolbar){
+  min-width:0;max-width:100%;column-gap:var(--ux-header-gap);
+}
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(.workout-hero-actions,.nut-hero-actions,.finance-hero-actions,.v38-finance-head-actions,.org-actions,.toolbar-group){
+  min-width:0;max-width:100%;gap:var(--ux-nav-gap);
+}
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(.workout-hero,.nut-hero,.finance-hero,.v38-finance-head,.org-hero)
+:is(h1,h2,h3){min-width:0;overflow-wrap:anywhere;line-height:var(--ux-leading-tight)}
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(.form-group,.form-row,.form-grid,.nut-field,.v38-field,.org-field){
+  min-width:0;max-width:100%;
+}
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){
+  box-sizing:border-box;min-width:0;max-width:100%;
+}
+html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+:is(input,select,textarea,button):focus-visible{
+  outline-color:var(--ux-focus);outline-offset:2px;
+}
+@media(max-width:760px){
+ html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+ :is(.workout-hero-actions,.nut-hero-actions,.finance-hero-actions,.v38-finance-head-actions,.org-actions){max-width:100%;min-width:0}
+ html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+ :is(.workout-hero-actions,.nut-hero-actions,.finance-hero-actions,.v38-finance-head-actions,.org-actions)
+ >:is(button,.btn,.icon-btn){min-height:var(--ux-control-height)}
+ html :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+ :is(.notes-toolbar,.org-toolbar,.nut-field,.v38-field,.form-group)
+ :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){
+   font-size:max(16px,1em);
+ }
+}
+
+/* Phase 14 — real-module visual system. One authoritative set of presentation
+   rules for the canonical Workout, Nutrition, Finance V38, Habits and Notes V40
+   screens. Every existing action, panel and persistence handler remains intact. */
+html body :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes){
+ --ux14-accent:var(--accent-purple,var(--ux-accent,#a78bfa));
+ --ux14-surface:var(--bg-surface,var(--ux-surface,#1a1d25));
+ --ux14-edge:color-mix(in srgb,var(--border-color,var(--ux-border,#40424d)) 65%,transparent);
+ --ux14-muted:var(--text-secondary,var(--ux-muted,#a9afba));
+}
+html body :is(#view-workout .workout-hero,#view-diet .nut-hero,#view-budget .v38-finance-head,#view-notes .org-hero,#view-habits .omx-page-heading){
+ box-sizing:border-box;min-width:0;max-width:100%;
+ min-height:146px;padding:24px 27px!important;
+ border:1px solid var(--ux14-edge);border-radius:20px!important;
+ background:radial-gradient(ellipse at 95% 0%,color-mix(in srgb,var(--ux14-accent) 10%,transparent),transparent 54%),var(--ux14-surface);
+ box-shadow:0 8px 28px rgba(0,0,0,.055);
+ gap:14px;align-items:center;
+}
+html body :is(#view-workout .workout-hero,#view-diet .nut-hero,#view-budget .v38-finance-head,#view-notes .org-hero,#view-habits .omx-page-heading)
+ :is(h1,h2,h3,.nut-title,.org-hero-title){
+ font-size:clamp(25px,2.3vw,34px);line-height:1.13;font-weight:780;
+ letter-spacing:-.043em;overflow-wrap:break-word;margin-block:0 8px;
+}
+html body :is(#view-workout .workout-hero,#view-diet .nut-hero,#view-budget .v38-finance-head,#view-notes .org-hero,#view-habits .omx-page-heading)
+ :is(p,.workout-hero-sub,.nut-hero-sub,.org-hero-sub){
+ color:var(--ux14-muted);font-size:13px;line-height:1.55;max-width:68ch;
+}
+html body :is(#view-workout .workout-hero-actions,#view-diet .nut-hero-actions,#view-budget .v38-finance-head-actions,#view-notes .org-actions,#view-habits .omx-page-heading .toolbar-group){
+ display:flex;align-items:center;justify-content:flex-end;gap:8px;
+ flex-wrap:wrap;max-width:100%;min-width:0;
+}
+html body :is(#view-workout .workout-hero-actions,#view-diet .nut-hero-actions,#view-budget .v38-finance-head-actions,#view-notes .org-actions,#view-habits .omx-page-heading .toolbar-group)
+ :is(button,.btn){
+ min-height:42px;border-radius:11px;padding:9px 14px;
+ font-weight:700;line-height:1.3;
+}
+html body :is(#view-workout .workout-tabs,#view-diet .nut-tabs,#view-budget .v38-fin-tabs,#view-notes .org-toolbar,#view-habits .habit-toolbar){
+ box-sizing:border-box;min-width:0;max-width:100%;
+ padding:8px 9px;border:1px solid var(--ux14-edge);
+ border-radius:14px;background:var(--ux14-surface);
+ gap:7px;box-shadow:none;
+}
+html body :is(#view-workout .workout-tabs,#view-diet .nut-tabs,#view-budget .v38-fin-tabs)
+ :is(button,[role="tab"]){
+ min-height:39px;border-radius:10px;font-size:12px;
+ font-weight:650;white-space:nowrap;
+}
+html body :is(#view-workout .workout-kpi-grid,#view-habits .habit-summary-grid,#view-notes .org-stats){
+ gap:12px;min-width:0;
+}
+html body :is(#view-workout .workout-kpi-grid,#view-habits .habit-summary-grid,#view-notes .org-stats)>*{
+ min-width:0;border-color:var(--ux14-edge);border-radius:15px;
+}
+html body :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+ :is(.workout-hero,.nut-hero,.v38-finance-head,.org-hero,.omx-page-heading,.org-toolbar,.workout-tabs,.nut-tabs,.v38-fin-tabs,.habit-toolbar)
+ :is(button,input,select,textarea):focus-visible{
+ outline:2px solid var(--ux14-accent);outline-offset:2px;
+}
+@media(max-width:760px){
+ html body :is(#view-workout .workout-hero,#view-diet .nut-hero,#view-budget .v38-finance-head,#view-notes .org-hero,#view-habits .omx-page-heading){
+  min-height:0;padding:18px 17px!important;border-radius:17px!important;
+  flex-wrap:wrap;gap:11px;align-items:flex-start;
+ }
+ html body :is(#view-workout .workout-hero,#view-diet .nut-hero,#view-budget .v38-finance-head,#view-notes .org-hero,#view-habits .omx-page-heading)
+ :is(h1,h2,h3,.nut-title,.org-hero-title){font-size:clamp(25px,6.6vw,31px)}
+ html body :is(#view-workout .workout-hero-actions,#view-diet .nut-hero-actions,#view-budget .v38-finance-head-actions,#view-notes .org-actions,#view-habits .omx-page-heading .toolbar-group){
+  width:100%;justify-content:flex-start;align-items:stretch;gap:7px;
+ }
+ html body :is(#view-workout .workout-hero-actions,#view-diet .nut-hero-actions,#view-budget .v38-finance-head-actions,#view-notes .org-actions,#view-habits .omx-page-heading .toolbar-group)
+ :is(button,.btn){min-height:44px;flex:0 1 auto}
+ html body :is(#view-workout .workout-tabs,#view-diet .nut-tabs,#view-budget .v38-fin-tabs,#view-notes .org-toolbar,#view-habits .habit-toolbar){
+  padding:7px;border-radius:12px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html body :is(#view-workout,#view-diet,#view-budget,#view-habits,#view-notes)
+ :is(.workout-hero,.nut-hero,.v38-finance-head,.org-hero,.habit-toolbar,.workout-tabs,.nut-tabs,.v38-fin-tabs) *{
+  transition:none;
+ }
+}

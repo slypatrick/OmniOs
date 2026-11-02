@@ -1,0 +1,871 @@
+
+function renderNotificationsStudio55(host){const ns=derivedNotifications55();host.innerHTML=`<div class="v55-card"><div class="v55-card-head"><div><div class="v55-card-title">Smart Notification Center</div><div class="v55-card-sub">Generated from tasks, calendar, pantry, documents, contacts, bills, subscriptions and routines.</div></div><div style="display:flex;gap:6px"><button class="btn" id="v55-browser-notif">Browser permission</button><button class="btn" id="v55-dismiss-all-studio">Dismiss all</button></div></div><div class="v55-list">${ns.map(n=>`<div class="v55-row clickable" data-ns="${esc(n.id)}"><div class="v55-row-ico">${n.severity==='danger'?'!':n.severity==='warn'?'△':'•'}</div><div class="v55-row-main"><div class="v55-row-title">${esc(n.title)}</div><div class="v55-row-meta">${esc(n.meta||'')}</div></div><span class="v55-pill ${n.severity==='danger'?'danger':n.severity==='warn'?'warn':''}">${esc(n.severity||'normal')}</span><button class="icon-btn" data-ns-dismiss="${esc(n.id)}">✕</button></div>`).join('')||'<div class="v55-empty">No active notifications.</div>'}</div></div>`;host.querySelector('#v55-browser-notif').onclick=async()=>{if(!window.Notification)return alert('Browser notifications are not supported.');toast(`Permission: ${await Notification.requestPermission()}`)};host.querySelector('#v55-dismiss-all-studio').onclick=()=>{ns.forEach(n=>{if(!state.v55.dismissed.includes(n.id))state.v55.dismissed.push(n.id)});state.v55.notifications=[];save55();renderStudio55();renderNotificationBadge55()};host.querySelectorAll('[data-ns]').forEach(r=>r.onclick=e=>{if(e.target.closest('[data-ns-dismiss]'))return;const n=ns.find(x=>x.id===r.dataset.ns);n?.open?.()});host.querySelectorAll('[data-ns-dismiss]').forEach(b=>b.onclick=e=>{e.stopPropagation();dismissNotification55(b.dataset.nsDismiss);renderStudio55()})}
+
+/* ---------- split view / command side panel ---------- */
+function ensureSplit55(){let s=document.getElementById('v55-split');if(s)return s;s=document.createElement('aside');s.id='v55-split';s.className='v55-split';s.innerHTML=`<div class="v55-split-head"><select class="form-select v55-split-select" id="v55-split-select"><option value="today">Today</option><option value="tasks">Tasks</option><option value="calendar">Calendar</option><option value="notes">Notes</option><option value="projects">Projects</option><option value="life">Life signals</option><option value="finance">Finance</option><option value="research">Research</option></select><button class="icon-btn" id="v55-split-refresh">↻</button><button class="icon-btn" id="v55-split-close">✕</button></div><div class="v55-split-body" id="v55-split-body"></div>`;document.body.appendChild(s);s.querySelector('#v55-split-close').onclick=()=>s.classList.remove('open');s.querySelector('#v55-split-refresh').onclick=renderSplit55;s.querySelector('#v55-split-select').onchange=renderSplit55;return s}
+function renderSplit55(){const s=ensureSplit55(),type=s.querySelector('#v55-split-select').value,h=s.querySelector('#v55-split-body');if(type==='today'){const tasks=arr(state.entries).filter(x=>x.status!=='completed'&&(x.date===today()||x.date<today())).slice(0,10),ev=arr(state.calendarEvents).filter(x=>x.date===today()).slice(0,10);h.innerHTML=`<div class="v55-card-title">Today</div><div class="v55-list" style="margin-top:9px">${ev.map(x=>`<div class="v55-row"><div class="v55-row-ico">●</div><div class="v55-row-main"><div class="v55-row-title">${esc(x.title)}</div><div class="v55-row-meta">${esc(x.startTime||'All day')}</div></div></div>`).join('')}${tasks.map(x=>`<div class="v55-row clickable" data-s-task="${esc(x.id)}"><div class="v55-row-ico">✓</div><div class="v55-row-main"><div class="v55-row-title">${esc(x.title)}</div><div class="v55-row-meta">${x.date<today()?'Overdue':'Today'}</div></div></div>`).join('')}</div>`}else if(type==='tasks'){h.innerHTML=`<div class="v55-card-title">Open tasks</div><div class="v55-list" style="margin-top:9px">${arr(state.entries).filter(x=>x.status!=='completed').slice(0,25).map(x=>`<div class="v55-row clickable" data-s-task="${esc(x.id)}"><div class="v55-row-ico">✓</div><div class="v55-row-main"><div class="v55-row-title">${esc(x.title)}</div><div class="v55-row-meta">${esc(x.date||'No date')} · ${esc(x.importance||'')}</div></div></div>`).join('')}</div>`}else if(type==='calendar'){h.innerHTML=`<div class="v55-card-title">Upcoming calendar</div><div class="v55-list" style="margin-top:9px">${arr(state.calendarEvents).filter(x=>x.date>=today()).sort((a,b)=>(a.date+a.startTime).localeCompare(b.date+b.startTime)).slice(0,20).map(x=>`<div class="v55-row"><div class="v55-row-ico">●</div><div class="v55-row-main"><div class="v55-row-title">${esc(x.title)}</div><div class="v55-row-meta">${fmtDate(x.date)} · ${esc(x.startTime||'All day')}</div></div></div>`).join('')}</div>`}else if(type==='notes'){h.innerHTML=`<div class="v55-card-title">Recent notes</div><div class="v55-list" style="margin-top:9px">${arr(state.notes).slice().sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0,20).map(x=>`<div class="v55-row clickable" data-s-note="${esc(x.id)}"><div class="v55-row-ico">✎</div><div class="v55-row-title">${esc(x.title)}</div></div>`).join('')}</div>`}else if(type==='projects'){h.innerHTML=`<div class="v55-card-title">Projects</div><div class="v55-list" style="margin-top:9px">${arr(state.life?.projects).filter(x=>x.status!=='archived').map(x=>`<div class="v55-row"><div class="v55-row-ico">◫</div><div class="v55-row-main"><div class="v55-row-title">${esc(x.name)}</div><div class="v55-row-meta">${esc(x.status||'')} ${x.targetDate?'· '+fmtDate(x.targetDate):''}</div></div></div>`).join('')}</div>`}else if(type==='life'){const hlt=arr(state.life?.health).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0],docs=arr(state.life?.documents).filter(x=>x.expiry&&daysFrom55(x.expiry)<=30),people=arr(state.life?.people).filter(x=>x.nextFollowUp&&daysFrom55(x.nextFollowUp)<=7);h.innerHTML=`<div class="v55-card-title">Life signals</div><div class="v55-grid two" style="margin-top:9px"><div class="v55-stat"><div class="v55-stat-l">Energy</div><div class="v55-stat-v">${esc(hlt?.energy||'—')}</div></div><div class="v55-stat"><div class="v55-stat-l">Sleep</div><div class="v55-stat-v">${hlt?.sleep?esc(hlt.sleep)+'h':'—'}</div></div><div class="v55-stat"><div class="v55-stat-l">Renewals</div><div class="v55-stat-v">${docs.length}</div></div><div class="v55-stat"><div class="v55-stat-l">Follow-ups</div><div class="v55-stat-v">${people.length}</div></div></div>`}else if(type==='finance'){const nw=netWorth55(),f=financeForecast55();h.innerHTML=`<div class="v55-card-title">Finance</div><div class="v55-grid two" style="margin-top:9px"><div class="v55-stat"><div class="v55-stat-l">Net worth</div><div class="v55-stat-v">${money(nw.net)}</div></div><div class="v55-stat"><div class="v55-stat-l">Bills 30d</div><div class="v55-stat-v">${money(f.due)}</div></div></div>`}else if(type==='research'){const b=researchBlockers55();h.innerHTML=`<div class="v55-card-title">Research</div><div class="v55-list" style="margin-top:9px">${state.v55.research.experiments.filter(x=>x.status!=='Completed').slice(0,8).map(x=>`<div class="v55-row"><div class="v55-row-main"><div class="v55-row-title">${esc(x.name)}</div><div class="v55-row-meta">${esc(x.status||'')} ${x.target?'· '+fmtDate(x.target):''}</div></div></div>`).join('')}${b.map(x=>`<div class="v55-row"><div class="v55-row-ico">!</div><div class="v55-row-title">${esc(x)}</div></div>`).join('')}</div>`};h.querySelectorAll('[data-s-task]').forEach(x=>x.onclick=()=>{window.switchView('tasks');window.showPowerSidebarFor?.('task',x.dataset.sTask)});h.querySelectorAll('[data-s-note]').forEach(x=>x.onclick=()=>{window.switchView('notes');window.openNoteModal?.(x.dataset.sNote)})}
+function openSplit55(type=''){const s=ensureSplit55();s.classList.add('open');if(type)s.querySelector('#v55-split-select').value=type;renderSplit55()}
+V55.split=openSplit55;
+
+/* ---------- contextual menus + touch gestures ---------- */
+let context55=null;
+function ensureContext55(){if(context55)return context55;context55=document.createElement('div');context55.className='v55-context';document.body.appendChild(context55);document.addEventListener('click',()=>context55.classList.remove('open'));window.addEventListener('blur',()=>context55.classList.remove('open'));return context55}
+function inferRef55(el){if(el.closest('[data-v35-task]'))return['task',el.closest('[data-v35-task]').dataset.v35Task];if(el.closest('[data-v35-project]'))return['project',el.closest('[data-v35-project]').dataset.v35Project];if(el.closest('[data-v35-record]')){const a=el.closest('[data-v35-record]').dataset.v35Record.split('|');const map={people:'person',documents:'document'};return[map[a[0]]||a[0],a[1]]}if(el.closest('[data-note-id]'))return['note',el.closest('[data-note-id]').dataset.noteId];return null}
+function openContext55(e){const nav=e.target.closest('.nav-item[data-view]'),ref=inferRef55(e.target);if(!nav&&!ref)return;e.preventDefault();const c=ensureContext55();if(nav){const v=nav.dataset.view;c.innerHTML=`<button data-ca="open">↗ Open</button><button data-ca="split">◫ Open in split view</button><button data-ca="home">⌂ Set as start page</button><button data-ca="favorite">★ Favorite page</button>`;c.querySelector('[data-ca="open"]').onclick=()=>window.switchView(v);c.querySelector('[data-ca="split"]').onclick=()=>openSplit55(v==='master-calendar'?'calendar':v);c.querySelector('[data-ca="home"]').onclick=()=>{state.v55.settings.homeView=v;state.settings.appearance.startView=v;save55();toast('Start page updated')};c.querySelector('[data-ca="favorite"]').onclick=()=>toast('Pages stay available in navigation; object favorites are stored in Studio.')}else{const[type,id]=ref,item=allItems55().find(i=>i.type===type&&String(i.id)===String(id));c.innerHTML=`<button data-ca="open">↗ Open</button><button data-ca="fav">${isFav55(type,id)?'☆ Remove favorite':'★ Favorite'}</button><button data-ca="meta">☷ Metadata & tags</button><button data-ca="split">◫ Keep side panel open</button>`;c.querySelector('[data-ca="open"]').onclick=()=>openItem55(item);c.querySelector('[data-ca="fav"]').onclick=()=>favorite55(type,id);c.querySelector('[data-ca="meta"]').onclick=()=>openMeta55(type,id);c.querySelector('[data-ca="split"]').onclick=()=>openSplit55(type==='note'?'notes':type==='task'?'tasks':'today')}c.style.left=Math.min(e.clientX,window.innerWidth-230)+'px';c.style.top=Math.min(e.clientY,window.innerHeight-180)+'px';c.classList.add('open')}
+document.addEventListener('contextmenu',openContext55);
+let touchStart55=null;document.addEventListener('touchstart',e=>{if(e.touches.length===1)touchStart55={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()}},{passive:true});document.addEventListener('touchend',e=>{if(!touchStart55)return;const x=e.changedTouches[0].clientX,y=e.changedTouches[0].clientY,dx=x-touchStart55.x,dy=Math.abs(y-touchStart55.y);if(touchStart55.x<24&&dx>90&&dy<70)document.getElementById('v35-back-btn')?.click();touchStart55=null},{passive:true});
+
+/* ---------- advanced habit modes ---------- */
+function openHabitMode55(id){const h=arr(state.habits).find(x=>String(x.id)===String(id));if(!h)return;const mta=state.v55.habitMeta[id]||(state.v55.habitMeta[id]={type:'yesno',target:1,unit:'',values:{}});const m=modal55(`Habit tracking — ${h.name}`,`<div class="form-grid"><div class="form-group"><label>Tracking type</label><select class="form-select" id="v55-h-type"><option value="yesno">Yes / no</option><option value="count">Count</option><option value="duration">Duration</option><option value="quantity">Quantity</option><option value="negative">Negative habit</option><option value="range">Target range</option></select></div><div class="form-group"><label>Target</label><input type="number" step=".1" class="form-input" id="v55-h-target" value="${esc(mta.target??1)}"></div><div class="form-group"><label>Unit</label><input class="form-input" id="v55-h-unit" value="${esc(mta.unit||'')}"></div><div class="form-group"><label>Today's value</label><input type="number" step=".1" class="form-input" id="v55-h-value" value="${esc(mta.values?.[today()]??(h.log?.[today()]?1:''))}"></div></div><div class="text-muted text-sm">Yes/no remains compatible with the normal Habits page. Numeric values are stored in the advanced layer and can be used for analysis.</div>`,`<button class="btn" data-v55-close>Cancel</button><button class="btn btn-primary" id="v55-h-save">Save</button>`);m.querySelector('#v55-h-type').value=mta.type||'yesno';m.querySelector('#v55-h-save').onclick=()=>{mta.type=m.querySelector('#v55-h-type').value;mta.target=Number(m.querySelector('#v55-h-target').value)||0;mta.unit=m.querySelector('#v55-h-unit').value.trim();mta.values=mta.values||{};const val=m.querySelector('#v55-h-value').value;if(val==='')delete mta.values[today()];else mta.values[today()]=Number(val);h.log=h.log||{};if(mta.type==='negative')h.log[today()]=Number(val||0)<=Number(mta.target||0);else if(mta.type==='range')h.log[today()]=Number(val||0)>=Number(mta.target||0);else if(mta.type!=='yesno')h.log[today()]=Number(val||0)>=Number(mta.target||0);save55();m.remove();toast('Habit tracking updated')}}
+function openHabitModesList55(){const m=modal55('Habit tracking modes',`<div class="v55-list">${arr(state.habits).map(h=>{const a=state.v55.habitMeta[h.id];return`<div class="v55-row clickable" data-hmode="${esc(h.id)}"><div class="v55-row-ico">${esc(h.icon||'⚡')}</div><div class="v55-row-main"><div class="v55-row-title">${esc(h.name)}</div><div class="v55-row-meta">${esc(a?.type||'yesno')} ${a?.target!=null?'· target '+a.target+' '+esc(a.unit||''):''}</div></div></div>`}).join('')}</div>`,`<button class="btn" data-v55-close>Done</button>`,true);m.querySelectorAll('[data-hmode]').forEach(x=>x.onclick=()=>{m.remove();openHabitMode55(x.dataset.hmode)})}
+
+/* ---------- calendar conflict banner ---------- */
+function enhanceCalendar55(){const view=document.getElementById('view-master-calendar');if(!view)return;view.querySelector('#v55-calendar-conflicts')?.remove();const c=calendarConflicts55();if(!c.length)return;const b=document.createElement('div');b.id='v55-calendar-conflicts';b.className='v55-card';b.style.cssText='margin-bottom:12px;border-color:color-mix(in srgb,var(--accent-yellow) 35%,var(--border-color))';b.innerHTML=`<div class="v55-card-head"><div><div class="v55-card-title">△ ${c.length} calendar conflict${c.length===1?'':'s'} detected</div><div class="v55-card-sub">Timed events or blocks overlap. Review in Studio before committing more time.</div></div><button class="btn btn-sm" id="v55-conflicts-open">Review</button></div>`;(view.firstElementChild||view).insertAdjacentElement('afterend',b);b.querySelector('#v55-conflicts-open').onclick=()=>{state.v55.settings.studioTab='overview';window.switchView('studio')}}
+
+/* ---------- resizable desktop sidebar ---------- */
+function installSidebarResize55(){const sb=document.querySelector('.sidebar');if(!sb||document.getElementById('v55-sidebar-resizer'))return;const h=document.createElement('div');h.id='v55-sidebar-resizer';h.style.cssText='position:absolute;top:0;right:-4px;width:8px;height:100%;cursor:col-resize;z-index:20';sb.style.position='relative';sb.appendChild(h);let startX=0,startW=0;h.onmousedown=e=>{if(innerWidth<761)return;startX=e.clientX;startW=sb.getBoundingClientRect().width;document.body.style.userSelect='none';const move=ev=>{const w=Math.max(180,Math.min(360,startW+ev.clientX-startX));state.v55.theme.sidebarWidth=w;document.documentElement.style.setProperty('--v55-sidebar-w',w+'px');document.documentElement.dataset.sidebarMode='custom'};const up=()=>{document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);document.body.style.userSelect='';save55()};document.addEventListener('mousemove',move);document.addEventListener('mouseup',up)}}
+function ensureCaptureFab55(){let b=document.getElementById('v55-capture-fab');if(!b){b=document.createElement('button');b.id='v55-capture-fab';b.className='v55-capture-fab';b.title='Quick capture';b.textContent='+';b.onclick=()=>openCapture55();document.body.appendChild(b)}b.style.display=state.v55.settings.captureFab===false?'none':''}
+
+/* ---------- mobile More integration ---------- */
+function enhanceMobileMore55(){const more=document.getElementById('v35-mobile-more');if(!more||more.__v55)return;more.__v55=true;more.addEventListener('click',()=>setTimeout(()=>{const boxes=[...document.querySelectorAll('.modal-overlay.active,.omnios-group-modal-backdrop.is-open')],box=boxes[boxes.length-1];if(!box||box.querySelector('[data-v55-more-studio]'))return;const grid=box.querySelector('[style*="grid-template-columns"]');if(!grid)return;const b=document.createElement('button');b.type='button';b.className='btn';b.dataset.v55MoreStudio='1';b.style.cssText='justify-content:flex-start;min-height:52px';b.innerHTML='<span style="width:24px;text-align:center">≡</span>Studio';b.onclick=()=>{box.remove();window.switchView('studio')};grid.appendChild(b)},20))}
+
+/* ---------- render/save/navigation integration ---------- */
+function postRender55(){ensure55();ensureStudioView();ensureStudioNav();ensureNotificationButton55();ensureCaptureFab55();installSidebarResize55();enhanceMobileMore55();applyTheme55();enhanceTaskToolbar55();enhanceToday55();enhanceDashboard55();enhanceCalendar55();renderNotificationBadge55();if(document.getElementById('view-studio')?.classList.contains('active'))renderStudio55();if(document.getElementById('v55-split')?.classList.contains('open'))renderSplit55()}
+function installRender55(){if(window.renderAll?.__v55)return;const base=window.renderAll;if(typeof base!=='function')return;const wrapped=function(){const r=base.apply(this,arguments);try{postRender55()}catch(e){console.warn('v55 post render',e)}return r};wrapped.__v55=true;window.renderAll=wrapped;try{renderAll=wrapped}catch(_){}}
+function installSaveAutomations55(){if(window.saveState?.__v55auto)return;const base=window.saveState;if(typeof base!=='function')return;let guard=false;const wrapped=function(){if(guard)return base.apply(this,arguments);const r=base.apply(this,arguments);try{if(runAutomations55()){guard=true;base.apply(this,arguments);guard=false}}catch(e){guard=false;console.warn('v55 automation',e)}try{renderNotificationBadge55()}catch(_){}return r};wrapped.__v55auto=true;window.saveState=wrapped;try{saveState=wrapped}catch(_){}}
+function installSwitch55(){if(window.switchView?.__v55)return;const base=window.switchView;if(typeof base!=='function')return;const wrapped=function(target){if(privacyLocked55&&target==='passwords')return lockApp55();const r=base.apply(this,arguments);try{if(target==='studio')renderStudio55();postRender55()}catch(e){console.warn('v55 switch',e)}return r};wrapped.__v55=true;window.switchView=wrapped;try{switchView=wrapped}catch(_){}}
+function installShortcuts55(){if(window.__v55Shortcuts)return;window.__v55Shortcuts=true;window.addEventListener('keydown',e=>{if(e.defaultPrevented)return;const tag=(e.target?.tagName||'').toLowerCase(),typing=['input','textarea','select'].includes(tag)||e.target?.isContentEditable;if(shortcutMatch55(e,state.v55.shortcuts.command)){e.preventDefault();e.stopImmediatePropagation();openSearch55();return}if(shortcutMatch55(e,state.v55.shortcuts.capture)){e.preventDefault();e.stopImmediatePropagation();openCapture55();return}if(shortcutMatch55(e,state.v55.shortcuts.notifications)){e.preventDefault();openNotifications55();return}if(shortcutMatch55(e,state.v55.shortcuts.today)){e.preventDefault();window.switchView('today');return}if(shortcutMatch55(e,state.v55.shortcuts.split)){e.preventDefault();openSplit55();return}if(!typing&&e.key==='/'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();openSearch55()}},true)}
+
+/* ---------- final initialization ---------- */
+function init55(){
+ ensure55();ensureStudioView();ensureStudioNav();setupManifest55();applyTheme55();installVersionHistory55();installSaveAutomations55();installRender55();installSwitch55();installShortcuts55();postRender55();
+ document.documentElement.dataset.omniosVersion='55';
+ if(state.v55.settings.homeView)state.settings.appearance.startView=state.v55.settings.homeView;
+ setInterval(()=>{try{renderNotificationBadge55();if(document.visibilityState==='visible'&&state.v55.settings.smartNotifications){const severe=derivedNotifications55().filter(n=>n.severity==='danger');const key='v55_notice_'+today();if(severe.length&&storage.getItem(key)!=='1'&&window.Notification?.permission==='granted'){new Notification('Second Brain needs attention',{body:`${severe.length} urgent item${severe.length===1?'':'s'} need review.`});storage.setItem(key,'1')}}}catch(_){}},60000);
+ setTimeout(()=>{if(state.v55.privacy.enabled)lockApp55()},160);
+ /* v101 owns desktop sidebar structure. v55 keeps its one-time setup through
+    init/postRender and no longer watches or mutates .nav-menu continuously. */
+}
+V55.openStudio=()=>window.switchView('studio');V55.assistant=openLocalAssistant55;V55.recipeScaler=openRecipeScaler55;V55.barcode=openBarcode55;V55.documentViewer=openDocumentViewer55;V55.habitModes=openHabitModesList55;V55.lock=lockApp55;
+try{init55()}catch(e){console.error('Second Brain v55 initialization failed',e)}
+})();
+</script>
+
+<style id="omnios-v56-audit-css">
+/* ===== Second Brain v56 — product-quality audit layer ===== */
+:root{--v56-safe-bottom:max(14px,env(safe-area-inset-bottom))}
+button{touch-action:manipulation}
+button:disabled,.btn.is-busy,.icon-btn.is-busy{opacity:.55!important;cursor:wait!important;pointer-events:none!important}
+.modal-overlay .modal{max-height:min(92dvh,920px);overflow:auto;overscroll-behavior:contain}
+.modal-overlay .modal-footer{position:sticky;bottom:-1px;z-index:5;background:linear-gradient(180deg,color-mix(in srgb,var(--bg-surface) 0%,transparent),var(--bg-surface) 18%);padding-top:12px;padding-bottom:var(--v56-safe-bottom)}
+.modal-overlay .modal-header{position:sticky;top:-1px;z-index:6;background:var(--bg-surface);padding-bottom:10px}
+.form-input,.form-select,.form-textarea{max-width:100%}
+.v56-health{margin-top:14px;border:1px solid var(--border-color);border-radius:14px;background:var(--bg-surface);padding:14px}
+.v56-health-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}.v56-health-title{font-size:.84rem;font-weight:800}.v56-health-sub{font-size:.62rem;color:var(--text-muted);margin-top:2px}.v56-health-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.v56-health-stat{padding:9px;border:1px solid var(--border-color);border-radius:9px;background:var(--bg-base)}.v56-health-stat span{display:block;font-size:.55rem;color:var(--text-muted);text-transform:uppercase}.v56-health-stat strong{display:block;font-size:1rem;margin-top:3px}.v56-health-list{margin-top:9px;font-size:.65rem;color:var(--text-secondary);line-height:1.55}.v56-health-list .bad{color:var(--accent-red)}.v56-health-list .warn{color:var(--accent-yellow)}
+.v56-skip-link{position:fixed;left:10px;top:-60px;z-index:9999;padding:8px 10px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--accent-cyan);color:var(--text-primary)}.v56-skip-link:focus{top:10px}
+@media(max-width:760px){.v56-health-grid{grid-template-columns:repeat(2,1fr)}.modal-overlay{padding:8px!important;align-items:flex-end!important}.modal-overlay .modal{max-height:94dvh!important;width:100%!important;border-radius:16px 16px 10px 10px!important}.modal-overlay .form-grid,.modal-overlay .form-row{grid-template-columns:1fr!important}.modal-footer .btn{min-height:42px}.org-shop-item{grid-template-columns:auto minmax(0,1fr)!important}.org-shop-item .form-input{grid-column:2/-1}}
+</style>
+<script id="omnios-v56-audit-js">
+(function(){
+'use strict';
+if(window.OmniV56)return;
+const V56=window.OmniV56={version:'56.0-audit'};
+const arr=x=>Array.isArray(x)?x:[];
+const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
+const nonneg=(v,d=0)=>Math.max(0,num(v,d));
+const today=()=>window.localDateString?localDateString():new Date().toISOString().slice(0,10);
+const esc=v=>window.escapeHtml?escapeHtml(v??''):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+function ensure56(){
+ state.v56=state.v56&&typeof state.v56==='object'?state.v56:{};
+ state.v56.daily=state.v56.daily&&typeof state.v56.daily==='object'?state.v56.daily:{};
+ state.v56.settings={waterGoal:8,...(state.v56.settings||{})};
+ const d=state.v56.daily[today()]||(state.v56.daily[today()]={water:0,note:'',updatedAt:new Date().toISOString()});
+ d.water=nonneg(d.water); d.note=String(d.note||'');
+ state.dietHydration=state.dietHydration&&typeof state.dietHydration==='object'?state.dietHydration:{};
+ if(!state.v56.hydrationMigrated){
+   Object.entries(state.v56.daily).forEach(([day,row])=>{
+     const glasses=nonneg(row?.water);
+     if(glasses>0&&state.dietHydration[day]==null)state.dietHydration[day]=Math.round(glasses*250)
+   });
+   state.v56.hydrationMigrated=true
+ }
+}
+function normalize56(){
+ ensure56();
+ state.transactions=arr(state.transactions).map(t=>({...t,amount:nonneg(t.amount),type:t.type==='income'?'income':'expense',status:t.status==='pending'?'pending':'cleared',date:String(t.date||today()).slice(0,10),tags:arr(t.tags),isTransfer:!!t.isTransfer}));
+ state.budgetCategories=arr(state.budgetCategories).map(c=>({...c,limit:nonneg(c.limit),type:c.type==='income'?'income':'expense'}));
+ state.wallets=arr(state.wallets).map(w=>({...w,openingBalance:num(w.openingBalance),creditLimit:nonneg(w.creditLimit),includeInNetWorth:w.includeInNetWorth!==false}));
+ state.groceryLists=arr(state.groceryLists).map(l=>({...l,budget:nonneg(l.budget),items:arr(l.items).map(i=>({...i,qty:nonneg(i.qty,1),estimatedCost:nonneg(i.estimatedCost),actualCost:i.actualCost==null?null:nonneg(i.actualCost),done:!!i.done}))}));
+ state.pantry=arr(state.pantry).map(p=>({...p,qty:nonneg(p.qty),minQty:nonneg(p.minQty),cost:nonneg(p.cost)}));
+ state.focusDaily=state.focusDaily&&typeof state.focusDaily==='object'?state.focusDaily:{};
+ Object.keys(state.focusDaily).forEach(k=>state.focusDaily[k]=nonneg(state.focusDaily[k]));
+ arr(state.workouts).forEach(w=>arr(w.exercises).forEach(e=>arr(e.sets).forEach(st=>{if('weight' in st)st.weight=nonneg(st.weight);if('reps' in st)st.reps=nonneg(st.reps);if('duration' in st)st.duration=nonneg(st.duration)})));
+ return state;
+}
+function txValid56(t){return t&&['income','expense'].includes(t.type)&&Number.isFinite(Number(t.amount))&&Number(t.amount)>=0&&/^\\d{4}-\\d{2}-\\d{2}$/.test(String(t.date||''))}
+function health56(){
+ const issues=[];
+ const dup=(xs,label)=>{const seen=new Set(),ds=[];for(const x of xs){const k=String(x?.id??'');if(k&&seen.has(k))ds.push(k);seen.add(k)}if(ds.length)issues.push({tone:'bad',text:`${label}: ${ds.length} duplicate ID${ds.length===1?'':'s'}.`})};
+ dup(arr(state.transactions),'Transactions');dup(arr(state.entries),'Tasks');dup(arr(state.groceryLists),'Grocery lists');dup(arr(state.pantry),'Pantry');
+ const badTx=arr(state.transactions).filter(t=>!txValid56(t));if(badTx.length)issues.push({tone:'bad',text:`${badTx.length} transaction${badTx.length===1?'':'s'} contain invalid amount/type/date data.`});
+ const orphanWallet=arr(state.transactions).filter(t=>t.walletId&&!arr(state.wallets).some(w=>String(w.id)===String(t.walletId)));if(orphanWallet.length)issues.push({tone:'warn',text:`${orphanWallet.length} transaction${orphanWallet.length===1?'':'s'} reference a deleted account.`});
+ const orphanCat=arr(state.transactions).filter(t=>t.categoryId&&!arr(state.budgetCategories).some(c=>String(c.id)===String(t.categoryId)));if(orphanCat.length)issues.push({tone:'warn',text:`${orphanCat.length} transaction${orphanCat.length===1?'':'s'} reference a missing category.`});
+ const orphanPantry=arr(state.groceryLists).flatMap(l=>arr(l.items)).filter(i=>i.pantryItemId&&!arr(state.pantry).some(p=>String(p.id)===String(i.pantryItemId)));if(orphanPantry.length)issues.push({tone:'warn',text:`${orphanPantry.length} grocery item${orphanPantry.length===1?'':'s'} link to missing Pantry records.`});
+ const pending=arr(state.transactions).filter(t=>t.status==='pending').length;
+ const transfers=arr(state.transactions).filter(t=>t.isTransfer).length;
+ return {issues,pending,transfers,records:arr(state.transactions).length+arr(state.entries).length+arr(state.notes).length+arr(state.groceryLists).length+arr(state.pantry).length};
+}
+V56.normalize=normalize56;V56.health=health56;
+// Normalize before every save, while preserving the entire existing save/render chain.
+const saveBase56=window.saveState;
+if(typeof saveBase56==='function'&&!saveBase56.__v56){const wrapped=function(){normalize56();return saveBase56.apply(this,arguments)};wrapped.__v56=true;window.saveState=wrapped}
+normalize56();
+
+function renderHealth56(){
+ const settings=document.getElementById('view-settings');if(!settings||!settings.classList.contains('active'))return;let host=document.getElementById('v56-health');if(!host){host=document.createElement('section');host.id='v56-health';host.className='v56-health';(document.getElementById('settings-content')||settings).appendChild(host)}const h=health56();
+ host.innerHTML=`<div class="v56-health-head"><div><div class="v56-health-title">System Health & daily defaults</div><div class="v56-health-sub">Checks data links and calculation inputs. Repair normalizes invalid numeric/status fields without deleting valid records.</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-sm" id="v56-health-check">Recheck</button><button class="btn btn-sm btn-primary" id="v56-health-repair">Repair data</button></div></div><div class="v56-health-grid"><div class="v56-health-stat"><span>Tracked records</span><strong>${h.records}</strong></div><div class="v56-health-stat"><span>Issues</span><strong>${h.issues.length}</strong></div><div class="v56-health-stat"><span>Pending finance</span><strong>${h.pending}</strong></div><div class="v56-health-stat"><span>Transfer rows</span><strong>${h.transfers}</strong></div></div><div class="settings-row" style="margin-top:10px"><div><div class="settings-row-label">Hydration</div><div class="settings-row-desc">Today and Nutrition now use one shared millilitre record. Set the optional target in Nutrition → Targets.</div></div><button type="button" class="btn btn-sm" id="v56-open-hydration">Open Nutrition</button></div><div class="v56-health-list">${h.issues.length?h.issues.map(x=>`<div class="${x.tone}">• ${esc(x.text)}</div>`).join(''):'<div>✓ No structural data-link problems detected by the local audit.</div>'}</div>`;
+ host.querySelector('#v56-health-check').onclick=renderHealth56;host.querySelector('#v56-health-repair').onclick=()=>{normalize56();window.saveState?.();renderHealth56();window.toast?.('Data normalized and rechecked.')};host.querySelector('#v56-open-hydration').onclick=()=>window.switchView?.('diet');
+}
+// Cross-app interaction hygiene.
+const clicks56=new WeakMap();document.addEventListener('click',e=>{const b=e.target.closest?.('button');if(!b)return;if(!b.hasAttribute('type'))b.type='button';const key=/save|complete|confirm|record|create|delete|paid|purchase/i.test((b.id||'')+' '+(b.textContent||''));if(!key)return;const now=performance.now(),last=clicks56.get(b)||0;if(now-last<550){e.preventDefault();e.stopImmediatePropagation();return}clicks56.set(b,now)},true);
+window.addEventListener('keydown',e=>{if(e.key!=='Escape'||e.defaultPrevented)return;const ovs=[...document.querySelectorAll('.modal-overlay.active,.power-overlay.open,.v55-overlay.open')].filter(x=>getComputedStyle(x).display!=='none');const top=ovs.at(-1);if(top){const close=top.querySelector('[data-close],[data-v38-close],[data-v55-close],[data-power-close],.modal-close-btn');if(close){e.preventDefault();close.click()}}},true);
+const mo=new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(!(n instanceof Element))continue;if(n.matches?.('.modal-overlay.active')){requestAnimationFrame(()=>{n.querySelector('input:not([type=hidden]):not([disabled]),textarea:not([disabled]),select:not([disabled])')?.focus({preventScroll:true})})}}});mo.observe(document.body,{childList:true,subtree:true});
+// Accessibility/basic semantics for dynamically-created controls.
+function semanticPass56(root=document){root.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('type'))b.type='button';if(!b.getAttribute('aria-label')&&!b.textContent.trim()&&b.title)b.setAttribute('aria-label',b.title)});root.querySelectorAll('img:not([alt])').forEach(i=>i.alt='')};
+function post56(){ensure56();semanticPass56();renderHealth56()}
+const baseSwitch56=window.switchView;if(typeof baseSwitch56==='function'&&!baseSwitch56.__v56){const f=function(){const r=baseSwitch56.apply(this,arguments);setTimeout(post56,0);return r};f.__v56=true;window.switchView=f}
+const baseRenderSettings56=window.renderSettings;if(typeof baseRenderSettings56==='function'&&!baseRenderSettings56.__v56){const f=function(){const r=baseRenderSettings56.apply(this,arguments);setTimeout(renderHealth56,0);return r};f.__v56=true;window.renderSettings=f}
+// Keep System Health refreshed after meaningful saves without entering a render loop.
+const savePost56=window.saveState;if(typeof savePost56==='function'&&!savePost56.__v56post){const f=function(){const r=savePost56.apply(this,arguments);setTimeout(()=>{if(document.getElementById('view-settings')?.classList.contains('active'))renderHealth56()},0);return r};f.__v56post=true;window.saveState=f}
+let skip=document.querySelector('.v56-skip-link');if(!skip){skip=document.createElement('button');skip.className='v56-skip-link';skip.textContent='Skip to main content';skip.onclick=()=>{const v=document.querySelector('.view.active');if(v){v.tabIndex=-1;v.focus()}};document.body.prepend(skip)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(post56,0),{once:true});else setTimeout(post56,0);
+})();
+</script>
+
+
+
+<!-- Second Brain v56.1 — Calendar filter state + multi-select reliability fix -->
+<style id="omnios-v561-calendar-filter-fix-css">
+#view-master-calendar .v36-cal-filter-panel{align-items:center}
+#view-master-calendar .v36-cal-filter-chip{position:relative;transition:border-color .14s ease,background .14s ease,color .14s ease,box-shadow .14s ease}
+#view-master-calendar .v36-cal-filter-chip.is-selected,
+#view-master-calendar .v36-cal-filter-chip:has(input:checked){border-color:color-mix(in srgb,var(--chip-color,var(--accent-cyan)) 55%,var(--border-color));background:color-mix(in srgb,var(--chip-color,var(--accent-cyan)) 11%,var(--bg-surface));color:var(--text-primary);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--chip-color,var(--accent-cyan)) 14%,transparent)}
+#view-master-calendar .v36-cal-filter-chip input{width:16px;height:16px;margin:0;flex:none;cursor:pointer}
+#view-master-calendar .v36-filter-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;padding-left:6px;border-left:1px solid var(--border-color)}
+#view-master-calendar .v36-filter-actions .btn{white-space:nowrap}
+#view-master-calendar .v36-filter-btn[aria-expanded="true"]{border-color:var(--accent-cyan);color:var(--accent-cyan);background:rgba(6,182,212,.08)}
+#view-master-calendar .v36-cal-filter-panel .v36-filter-summary{font-size:.61rem;color:var(--text-muted);white-space:nowrap;margin-right:2px}
+@media(max-width:760px){#view-master-calendar .v36-cal-filter-panel{align-items:stretch;padding:9px;gap:6px}#view-master-calendar .v36-cal-filter-chip{flex:1 1 calc(50% - 6px);min-height:39px}#view-master-calendar .v36-filter-actions{width:100%;margin-left:0;padding-left:0;padding-top:7px;border-left:0;border-top:1px solid var(--border-color)}#view-master-calendar .v36-filter-actions .btn{flex:1 1 120px;justify-content:center}#view-master-calendar .v36-cal-filter-panel .v36-filter-summary{width:100%}}
+</style>
+<script id="omnios-v561-calendar-filter-fix-js">
+(function(){
+  'use strict';
+  if(window.__omniCalendarFilterFix561)return;
+  window.__omniCalendarFilterFix561=true;
+  window.__omniCalendarFilterPanelOpen=false;
+
+  const DEFS=[
+    ['event','Events','●','#ec4899'],['timeblock','Time blocks','▣','#06b6d4'],['task','Tasks due','✓','#3b82f6'],['deadline','Deadlines','◆','#f59e0b'],['workout','Workouts','🏋️','#ef4444'],['habit','Habit activity','⚡','#10b981'],['focus','Focus activity','◷','#14b8a6'],['finance','Finance activity','↗','#eab308'],['note','Note activity','▤','#a855f7']
+  ];
+  const PRESETS={
+    planning:{event:true,timeblock:true,task:true,deadline:true,workout:true,habit:false,focus:false,finance:false,note:false},
+    life:{event:true,timeblock:true,task:true,deadline:true,workout:true,habit:true,focus:false,finance:false,note:false},
+    activity:{event:true,timeblock:true,task:true,deadline:true,workout:true,habit:true,focus:true,finance:true,note:true}
+  };
+
+  function workspace(){
+    state.settings=state.settings||{};
+    state.settings.calendar=state.settings.calendar||{};
+    let ws=state.settings.calendar.workspace;
+    if(!ws||typeof ws!=='object')ws=state.settings.calendar.workspace={};
+    if(!ws.filters||typeof ws.filters!=='object')ws.filters={};
+    return ws;
+  }
+  function currentValue(key){
+    try{return masterCalendarFilters[key]!==false}catch(_){return workspace().filters[key]!==false}
+  }
+  function setCurrent(key,value){
+    try{masterCalendarFilters[key]=!!value}catch(_){ }
+    workspace().filters[key]=!!value;
+  }
+  function snapshot(){
+    const f={};DEFS.forEach(([k])=>f[k]=currentValue(k));return f;
+  }
+  function persist(){
+    const ws=workspace();ws.filters=snapshot();
+    try{if(typeof masterCalendarMode!=='undefined')ws.mode=masterCalendarMode}catch(_){ }
+    try{
+      if(typeof storage!=='undefined'&&storage?.setItem)storage.setItem('omnios_v3_state',JSON.stringify(state));
+      else localStorage.setItem('omnios_v3_state',JSON.stringify(state));
+    }catch(_){ }
+    try{window.omniOSUIPersistence?.capture?.()}catch(_){ }
+  }
+  function rerender(){
+    try{window.renderMasterCalendar?.()}catch(e){console.warn('Calendar rerender:',e)}
+    requestAnimationFrame(enhance);
+  }
+  function setPreset(name){
+    const p=PRESETS[name];if(!p)return;
+    DEFS.forEach(([k])=>setCurrent(k,p[k]!==false));
+    workspace().preset=name;
+    persist();window.__omniCalendarFilterPanelOpen=true;rerender();
+  }
+  function setAll(value){
+    DEFS.forEach(([k])=>setCurrent(k,value));workspace().preset='custom';persist();window.__omniCalendarFilterPanelOpen=true;rerender();
+  }
+  function invert(){
+    DEFS.forEach(([k])=>setCurrent(k,!currentValue(k)));workspace().preset='custom';persist();window.__omniCalendarFilterPanelOpen=true;rerender();
+  }
+
+  function enhance(){
+    const panel=document.getElementById('v36-filter-panel'),toggle=document.getElementById('v36-filter-btn');
+    if(!panel||!toggle)return;
+    const all=document.getElementById('v36-filter-all'),plan=document.getElementById('v36-filter-plan');
+    if(all)all.textContent='Select all';if(plan)plan.textContent='Planning only';
+
+    let actions=panel.querySelector('.v36-filter-actions');
+    if(!actions){
+      actions=document.createElement('div');actions.className='v36-filter-actions';
+      const summary=document.createElement('span');summary.className='v36-filter-summary';actions.appendChild(summary);
+      if(all)actions.appendChild(all);
+      const clear=document.createElement('button');clear.type='button';clear.className='btn btn-sm';clear.id='v561-filter-none';clear.textContent='Clear all';actions.appendChild(clear);
+      const inv=document.createElement('button');inv.type='button';inv.className='btn btn-sm';inv.id='v561-filter-invert';inv.textContent='Invert';actions.appendChild(inv);
+      if(plan)actions.appendChild(plan);panel.appendChild(actions);
+    }
+    const selected=DEFS.filter(([k])=>currentValue(k)).length;
+    const summary=panel.querySelector('.v36-filter-summary');if(summary)summary.textContent=`${selected} of ${DEFS.length} shown`;
+    panel.querySelectorAll('[data-v36-filter]').forEach(input=>{
+      const key=input.dataset.v36Filter;input.checked=currentValue(key);
+      const chip=input.closest('.v36-cal-filter-chip');if(chip){const def=DEFS.find(([k])=>k===key);if(def?.[3])chip.style.setProperty('--chip-color',def[3]);chip.classList.toggle('is-selected',input.checked)}
+    });
+    panel.classList.toggle('open',!!window.__omniCalendarFilterPanelOpen);
+    toggle.setAttribute('aria-expanded',window.__omniCalendarFilterPanelOpen?'true':'false');toggle.setAttribute('aria-controls','v36-filter-panel');
+  }
+
+  // Capture before the private v36 module handlers. This is the key fix: write the NEW
+  // filter state to workspace.filters before the v36 ensure routine gets a chance to restore old values.
+  document.addEventListener('change',function(e){
+    const input=e.target.closest?.('[data-v36-filter]');if(!input)return;
+    e.stopImmediatePropagation();
+    const key=input.dataset.v36Filter;setCurrent(key,!!input.checked);workspace().preset='custom';persist();window.__omniCalendarFilterPanelOpen=true;rerender();
+  },true);
+
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest?.('#v36-filter-btn,#v36-filter-all,#v36-filter-plan,#v561-filter-none,#v561-filter-invert,[data-v36-preset]');if(!btn)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    if(btn.id==='v36-filter-btn'){
+      window.__omniCalendarFilterPanelOpen=!window.__omniCalendarFilterPanelOpen;
+      enhance();return;
+    }
+    if(btn.id==='v36-filter-all')return setAll(true);
+    if(btn.id==='v561-filter-none')return setAll(false);
+    if(btn.id==='v561-filter-invert')return invert();
+    if(btn.id==='v36-filter-plan')return setPreset('planning');
+    if(btn.matches('[data-v36-preset]'))return setPreset(btn.dataset.v36Preset);
+  },true);
+
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Escape'||!window.__omniCalendarFilterPanelOpen||document.querySelector('.modal-overlay.active'))return;
+    window.__omniCalendarFilterPanelOpen=false;enhance();e.stopImmediatePropagation();
+  },true);
+
+  const root=document.getElementById('master-calendar-content');
+  if(root){new MutationObserver(()=>requestAnimationFrame(enhance)).observe(root,{childList:true,subtree:true});}
+  requestAnimationFrame(enhance);
+})();
+</script>
+
+<style id="omnios-v56-task-kanban-dnd-css">
+/* ===== Second Brain v56 — Tasks spacing + status drag/drop ===== */
+#view-tasks > .toolbar{
+  margin:0 0 14px!important;
+  padding:10px 12px!important;
+  gap:8px!important;
+  align-items:center!important;
+  border:1px solid var(--border-color);
+  border-radius:12px;
+  background:var(--bg-surface);
+}
+#view-tasks > .toolbar .toolbar-group{gap:6px!important;align-items:center;min-width:0}
+#view-tasks > .toolbar .toolbar-divider{margin:0 2px!important}
+#view-tasks #tasks-content{padding:2px 0 10px;min-width:0}
+#view-tasks .kanban-board{
+  gap:12px!important;
+  align-items:stretch;
+  min-height:420px;
+}
+#view-tasks .kanban-col{
+  padding:0!important;
+  overflow:hidden;
+  min-width:0;
+  min-height:390px;
+  border-radius:14px!important;
+  background:var(--bg-surface);
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+#view-tasks .kanban-col-header{
+  min-height:46px;
+  margin:0!important;
+  padding:12px 14px!important;
+  border-bottom:1px solid var(--border-color);
+  background:var(--bg-elevated);
+  gap:10px;
+}
+#view-tasks .kanban-col-header .count{margin-left:auto}
+#view-tasks .kanban-cards{
+  min-height:330px;
+  padding:10px!important;
+  gap:8px!important;
+  overflow-y:auto;
+  scrollbar-gutter:stable;
+  transition:background .15s ease,box-shadow .15s ease;
+}
+#view-tasks .kanban-card{
+  position:relative;
+  padding:12px 12px 11px!important;
+  border-radius:10px!important;
+  cursor:grab!important;
+  touch-action:pan-y;
+  user-select:none;
+  -webkit-user-select:none;
+}
+#view-tasks .kanban-card:active{cursor:grabbing!important}
+#view-tasks .kanban-card-title{margin:0 24px 7px 0!important;line-height:1.35}
+#view-tasks .kanban-card-meta{gap:5px!important;row-gap:5px!important}
+#view-tasks .kanban-card::after{
+  content:'⋮⋮';
+  position:absolute;
+  top:10px;right:10px;
+  color:var(--text-muted);
+  font-size:.7rem;
+  letter-spacing:-2px;
+  opacity:.35;
+  pointer-events:none;
+}
+#view-tasks .kanban-card:hover::after{opacity:.7}
+#view-tasks .kanban-card.task-dnd-dragging{
+  opacity:.38!important;
+  transform:scale(.985)!important;
+  box-shadow:none!important;
+}
+#view-tasks .kanban-col.task-dnd-over{
+  border-color:var(--accent-cyan)!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent-cyan) 22%,transparent);
+}
+#view-tasks .kanban-col.task-dnd-over .kanban-cards{
+  background:color-mix(in srgb,var(--accent-cyan) 6%,transparent);
+}
+#view-tasks .kanban-col.task-dnd-over .kanban-cards::after{
+  content:'Drop to move here';
+  display:block;
+  order:9999;
+  padding:10px;
+  border:1px dashed color-mix(in srgb,var(--accent-cyan) 55%,var(--border-color));
+  border-radius:9px;
+  color:var(--accent-cyan);
+  text-align:center;
+  font-size:.63rem;
+  font-weight:750;
+}
+#view-tasks .kanban-col[data-task-status="todo"]{--task-status-color:var(--accent-blue)}
+#view-tasks .kanban-col[data-task-status="in-progress"]{--task-status-color:var(--accent-yellow)}
+#view-tasks .kanban-col[data-task-status="completed"]{--task-status-color:var(--accent-green)}
+#view-tasks .kanban-col-header{box-shadow:inset 3px 0 0 var(--task-status-color,transparent)}
+#view-tasks .task-dnd-hint{
+  display:flex;align-items:center;gap:6px;
+  margin:0 0 9px 2px;
+  color:var(--text-muted);font-size:.6rem;
+}
+#view-tasks .task-dnd-hint svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8}
+@media(max-width:900px){
+  #view-tasks .kanban-board{display:flex!important;overflow-x:auto;gap:10px!important;padding:0 0 8px!important;scroll-snap-type:x proximity}
+  #view-tasks .kanban-col{min-width:min(86vw,360px)!important;scroll-snap-align:start}
+  #view-tasks .kanban-cards{overflow-y:visible;min-height:240px}
+}
+@media(max-width:640px){
+  #view-tasks > .toolbar{padding:9px!important;margin-bottom:10px!important}
+  #view-tasks #tasks-content{padding-bottom:4px}
+  #view-tasks .kanban-col{min-width:84vw!important;min-height:320px}
+  #view-tasks .kanban-col-header{padding:11px 12px!important}
+  #view-tasks .kanban-cards{padding:8px!important}
+  #view-tasks .kanban-card{padding:11px!important}
+}
+</style>
+<script id="omnios-v56-task-kanban-dnd-js">
+(function(){'use strict';
+  const STATUSES=['todo','in-progress','completed'];
+  const LABELS={todo:'To Do','in-progress':'In Progress',completed:'Completed'};
+  let dragId=null;
+  let suppressClickUntil=0;
+  let queued=false;
+
+  function eq(a,b){return String(a)===String(b)}
+    function getTask(id){return (state.entries||[]).find(t=>eq(t.id,id))}
+  function colStatus(col,index){return col.dataset.taskStatus||STATUSES[index]||''}
+
+  function addHint(){
+    const host=document.getElementById('tasks-content');
+    if(!host||host.querySelector('.task-dnd-hint')||!host.querySelector('.kanban-board'))return;
+    const hint=document.createElement('div');
+    hint.className='task-dnd-hint';
+    hint.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7h8M8 12h8M8 17h8"/><path d="m5 7-2 2 2 2M19 7l2 2-2 2"/></svg><span>Drag a task card to another column to change its status.</span>';
+    host.prepend(hint);
+  }
+
+  function clearOver(){document.querySelectorAll('#view-tasks .kanban-col.task-dnd-over').forEach(x=>x.classList.remove('task-dnd-over'))}
+
+  function updateStatus(id,next){
+    const task=getTask(id);
+    if(!task||!STATUSES.includes(next)||task.status===next)return false;
+    const prev=task.status;
+    task.status=next;
+    task.completed=next==='completed';
+    task.updatedAt=new Date().toISOString();
+    if(next==='completed') task.completedAt=task.completedAt||task.updatedAt;
+    else task.completedAt=null;
+    suppressClickUntil=Date.now()+500;
+    try{window.saveState?.()}catch(e){console.warn('Task drag save:',e)}
+    if(next==='completed'&&prev!=='completed'){
+      try{if(typeof processRecurringTasks35==='function')processRecurringTasks35()}catch(e){console.warn('Recurring task processing:',e)}
+    }
+    try{window.toast?.(`Moved to ${LABELS[next]}`)}catch(_){ }
+    return true;
+  }
+
+  function bindCard(card){
+    if(card.dataset.taskDndBound==='1')return;
+    card.dataset.taskDndBound='1';
+    card.draggable=true;
+    card.setAttribute('aria-grabbed','false');
+    card.title=card.title||'Drag to another status column';
+    card.addEventListener('dragstart',e=>{
+      dragId=card.dataset.entryId;
+      card.classList.add('task-dnd-dragging');
+      card.setAttribute('aria-grabbed','true');
+      suppressClickUntil=Date.now()+600;
+      try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(dragId));e.dataTransfer.setDragImage(card,24,18)}catch(_){ }
+    });
+    card.addEventListener('dragend',()=>{
+      dragId=null;
+      card.classList.remove('task-dnd-dragging');
+      card.setAttribute('aria-grabbed','false');
+      clearOver();
+      suppressClickUntil=Date.now()+220;
+    });
+    card.addEventListener('keydown',e=>{
+      if(!(e.altKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')))return;
+      const t=getTask(card.dataset.entryId);if(!t)return;
+      const i=STATUSES.indexOf(t.status),n=e.key==='ArrowRight'?Math.min(STATUSES.length-1,i+1):Math.max(0,i-1);
+      if(n===i)return;
+      e.preventDefault();updateStatus(t.id,STATUSES[n]);
+    });
+    if(!card.hasAttribute('tabindex'))card.tabIndex=0;
+  }
+
+  function bindColumn(col,index){
+    const status=colStatus(col,index);if(!status)return;
+    col.dataset.taskStatus=status;
+    col.setAttribute('aria-label',`${LABELS[status]} task column`);
+    const zone=col.querySelector('.kanban-cards')||col;
+    if(zone.dataset.taskDndBound==='1')return;
+    zone.dataset.taskDndBound='1';
+    zone.addEventListener('dragenter',e=>{if(!dragId)return;e.preventDefault();clearOver();col.classList.add('task-dnd-over')});
+    zone.addEventListener('dragover',e=>{if(!dragId)return;e.preventDefault();try{e.dataTransfer.dropEffect='move'}catch(_){ }clearOver();col.classList.add('task-dnd-over')});
+    zone.addEventListener('dragleave',e=>{if(!col.contains(e.relatedTarget))col.classList.remove('task-dnd-over')});
+    zone.addEventListener('drop',e=>{
+      e.preventDefault();e.stopPropagation();
+      const id=dragId||(()=>{try{return e.dataTransfer.getData('text/plain')}catch(_){return ''}})();
+      clearOver();
+      if(!id)return;
+      const task=getTask(id);
+      if(!task||task.status===status){suppressClickUntil=Date.now()+250;return}
+      updateStatus(id,status);
+    });
+  }
+
+  function enhance(){
+    if(typeof currentTaskView==='undefined'||currentTaskView!=='kanban')return;
+    const board=document.querySelector('#view-tasks #tasks-content .kanban-board');if(!board)return;
+    [...board.querySelectorAll(':scope > .kanban-col')].forEach(bindColumn);
+    board.querySelectorAll('.kanban-card[data-entry-id]').forEach(bindCard);
+    addHint();
+  }
+
+  document.addEventListener('click',e=>{
+    if(Date.now()>=suppressClickUntil)return;
+    if(e.target.closest('#view-tasks .kanban-card[data-entry-id]')){e.preventDefault();e.stopImmediatePropagation()}
+  },true);
+
+  const host=document.getElementById('tasks-content');
+  if(host)new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance()})}).observe(host,{childList:true,subtree:true});
+  document.addEventListener('click',e=>{if(e.target.closest('#view-tasks [data-taskview="kanban"]'))setTimeout(enhance,0)});
+  const oldSwitch=window.switchView;
+  if(typeof oldSwitch==='function'&&!oldSwitch.__taskDnd56){
+    const f=function(v){const r=oldSwitch.apply(this,arguments);if(v==='tasks')setTimeout(enhance,0);return r};
+    f.__taskDnd56=true;window.switchView=f;
+  }
+  enhance();setTimeout(enhance,120);
+  window.OmniTaskDnd56={enhance,move:updateStatus};
+})();
+</script>
+
+
+<style id="omnios-v56-premium-task-board-css">
+/* ===== Second Brain v56 — Premium status board ===== */
+#view-tasks .kanban-board{
+  grid-template-columns:repeat(3,minmax(260px,1fr))!important;
+  gap:14px!important;
+  align-items:start!important;
+}
+#view-tasks .kanban-col{
+  --board-accent:var(--accent-blue);
+  --board-tint:rgba(59,130,246,.08);
+  position:relative;
+  min-height:520px!important;
+  border:1px solid color-mix(in srgb,var(--board-accent) 34%,var(--border-color))!important;
+  border-radius:15px!important;
+  background:
+    linear-gradient(180deg,color-mix(in srgb,var(--board-accent) 9%,var(--bg-surface)) 0,color-mix(in srgb,var(--board-accent) 3%,var(--bg-surface)) 155px,var(--bg-surface) 320px)!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.08);
+  overflow:hidden;
+}
+#view-tasks .kanban-col[data-task-status="todo"]{--board-accent:#f472b6;--board-tint:rgba(244,114,182,.08)}
+#view-tasks .kanban-col[data-task-status="in-progress"]{--board-accent:#f5b942;--board-tint:rgba(245,185,66,.08)}
+#view-tasks .kanban-col[data-task-status="completed"]{--board-accent:#52d7ae;--board-tint:rgba(82,215,174,.08)}
+#view-tasks .kanban-col-header{
+  min-height:84px!important;
+  padding:14px 14px 12px!important;
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:start!important;
+  gap:10px!important;
+  background:transparent!important;
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+#view-tasks .premium-status-icon{
+  width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;
+  color:#071015;background:var(--board-accent);font-size:.82rem;font-weight:900;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--board-accent) 13%,transparent);
+}
+#view-tasks .premium-status-copy{min-width:0;padding-top:1px}
+#view-tasks .premium-status-title-row{display:flex;align-items:center;gap:7px;min-width:0}
+#view-tasks .premium-status-title{font-size:.84rem;font-weight:850;color:var(--text-primary);line-height:1.2}
+#view-tasks .premium-status-count{
+  display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;
+  background:color-mix(in srgb,var(--board-accent) 16%,var(--bg-elevated));
+  color:color-mix(in srgb,var(--board-accent) 82%,var(--text-primary));font-size:.58rem;font-weight:850;
+}
+#view-tasks .premium-status-sub{margin-top:4px;font-size:.59rem;line-height:1.35;color:var(--text-muted);white-space:normal}
+#view-tasks .premium-status-actions{display:flex;gap:5px;align-items:center}
+#view-tasks .premium-status-action{
+  width:30px;height:30px;border:1px solid color-mix(in srgb,var(--board-accent) 18%,var(--border-color));
+  border-radius:8px;background:color-mix(in srgb,var(--board-accent) 5%,var(--bg-elevated));
+  color:var(--text-secondary);font:inherit;font-size:.78rem;cursor:pointer;display:grid;place-items:center;
+}
+#view-tasks .premium-status-action:hover{background:color-mix(in srgb,var(--board-accent) 12%,var(--bg-elevated));color:var(--text-primary);border-color:color-mix(in srgb,var(--board-accent) 48%,var(--border-color))}
+#view-tasks .kanban-cards{
+  min-height:410px!important;
+  padding:0 11px 11px!important;
+  gap:8px!important;
+  background:transparent!important;
+  overflow:visible!important;
+}
+#view-tasks .kanban-card.premium-task-card{
+  padding:11px 11px 10px!important;
+  border-radius:11px!important;
+  border:1px solid color-mix(in srgb,var(--board-accent) 10%,var(--border-color))!important;
+  background:color-mix(in srgb,var(--bg-elevated) 86%,var(--board-accent) 14%)!important;
+  box-shadow:0 4px 11px rgba(0,0,0,.08)!important;
+  cursor:grab!important;
+  overflow:hidden;
+}
+#view-tasks .kanban-card.premium-task-card:hover{
+  border-color:color-mix(in srgb,var(--board-accent) 52%,var(--border-color))!important;
+  box-shadow:0 9px 20px rgba(0,0,0,.14)!important;
+  transform:translateY(-1px)!important;
+}
+#view-tasks .kanban-card.premium-task-card::after{display:none!important}
+#view-tasks .premium-card-top{display:flex;align-items:flex-start;gap:8px;min-width:0}
+#view-tasks .premium-card-leading{
+  width:25px;height:25px;border-radius:7px;display:grid;place-items:center;flex:none;
+  border:1px solid color-mix(in srgb,var(--board-accent) 18%,var(--border-color));
+  color:var(--board-accent);background:color-mix(in srgb,var(--board-accent) 8%,transparent);font-size:.66rem;font-weight:850;
+}
+#view-tasks .premium-card-heading{min-width:0;flex:1}
+#view-tasks .premium-card-title{font-size:.76rem;font-weight:780;line-height:1.32;color:var(--text-primary);overflow-wrap:anywhere}
+#view-tasks .premium-card-menu{
+  width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:var(--text-muted);
+  cursor:pointer;font:inherit;letter-spacing:1px;display:grid;place-items:center;flex:none
+}
+#view-tasks .premium-card-menu:hover{background:var(--bg-hover);color:var(--text-primary)}
+#view-tasks .premium-card-description{margin:7px 2px 0 33px;color:var(--text-secondary);font-size:.62rem;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#view-tasks .premium-card-tags{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 0 33px}
+#view-tasks .premium-task-chip{
+  display:inline-flex;align-items:center;min-height:19px;padding:2px 7px;border-radius:999px;
+  background:var(--bg-hover);color:var(--text-secondary);font-size:.54rem;font-weight:720;white-space:nowrap
+}
+#view-tasks .premium-task-chip.category{background:color-mix(in srgb,var(--accent-blue) 14%,transparent);color:color-mix(in srgb,var(--accent-blue) 84%,var(--text-primary))}
+#view-tasks .premium-task-chip.project{background:color-mix(in srgb,var(--accent-purple) 14%,transparent);color:color-mix(in srgb,var(--accent-purple) 82%,var(--text-primary))}
+#view-tasks .premium-task-chip.context{background:color-mix(in srgb,var(--accent-cyan) 12%,transparent);color:var(--accent-cyan)}
+#view-tasks .premium-card-footer{display:flex;align-items:center;gap:7px;margin:9px 0 0 33px;min-width:0}
+#view-tasks .premium-card-date{display:flex;align-items:center;gap:5px;color:var(--text-muted);font-size:.56rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#view-tasks .premium-card-date svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;flex:none}
+#view-tasks .premium-priority{margin-left:auto;padding:3px 7px;border-radius:999px;font-size:.52rem;font-weight:800;text-transform:capitalize;flex:none}
+#view-tasks .premium-priority.high{color:#ff7f8c;background:rgba(239,68,68,.12)}
+#view-tasks .premium-priority.medium{color:#e7b43f;background:rgba(245,158,11,.12)}
+#view-tasks .premium-priority.low{color:var(--text-muted);background:var(--bg-hover)}
+#view-tasks .kanban-col[data-task-status="completed"] .premium-task-card{opacity:.72;background:color-mix(in srgb,var(--bg-elevated) 88%,var(--board-accent) 12%)!important}
+#view-tasks .kanban-col[data-task-status="completed"] .premium-card-title{text-decoration:line-through;color:var(--text-secondary)}
+#view-tasks .kanban-col[data-task-status="completed"] .premium-card-leading{border-radius:50%;background:var(--board-accent);color:#071015;border-color:transparent}
+#view-tasks .premium-drop-slot{
+  order:9999;min-height:72px;margin-top:2px;border:1px dashed color-mix(in srgb,var(--board-accent) 24%,var(--border-color));
+  border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  color:var(--text-muted);background:color-mix(in srgb,var(--board-accent) 2.5%,transparent);transition:.15s;pointer-events:none
+}
+#view-tasks .premium-drop-slot strong{font-size:.6rem;color:var(--text-secondary);font-weight:760;margin-top:2px}
+#view-tasks .premium-drop-slot small{font-size:.53rem;margin-top:2px}
+#view-tasks .premium-drop-slot span{font-size:1rem;line-height:1;color:color-mix(in srgb,var(--board-accent) 55%,var(--text-muted))}
+#view-tasks .kanban-col.task-dnd-over .premium-drop-slot{border-color:var(--board-accent);background:color-mix(in srgb,var(--board-accent) 10%,transparent);color:var(--board-accent);transform:scale(1.01)}
+#view-tasks .kanban-col.task-dnd-over{border-color:var(--board-accent)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--board-accent) 17%,transparent),0 10px 28px rgba(0,0,0,.12)!important}
+#view-tasks .kanban-col.task-dnd-over .kanban-cards::after{display:none!important}
+#view-tasks .task-dnd-hint{margin:0 0 10px 2px!important}
+#omni-task-board-menu{
+  position:fixed;z-index:10050;min-width:180px;padding:5px;border:1px solid var(--border-color);border-radius:10px;
+  background:var(--bg-surface);box-shadow:0 14px 40px rgba(0,0,0,.24);display:none
+}
+#omni-task-board-menu.open{display:block}
+#omni-task-board-menu button{width:100%;border:0;background:transparent;color:var(--text-secondary);padding:8px 9px;border-radius:7px;text-align:left;font:inherit;font-size:.66rem;cursor:pointer}
+#omni-task-board-menu button:hover{background:var(--bg-hover);color:var(--text-primary)}
+@media(max-width:900px){
+  #view-tasks .kanban-board{grid-template-columns:none!important;align-items:stretch!important}
+  #view-tasks .kanban-col{min-width:min(88vw,380px)!important;min-height:500px!important}
+}
+@media(max-width:640px){
+  #view-tasks .kanban-col{min-width:86vw!important}
+  #view-tasks .kanban-col-header{min-height:78px!important;padding:12px!important}
+  #view-tasks .premium-card-description,#view-tasks .premium-card-tags,#view-tasks .premium-card-footer{margin-left:31px}
+}
+</style>
+<script id="omnios-v56-premium-task-board-js">
+(function(){'use strict';
+  const META={
+    'todo':{title:'To Do',sub:'Ideas and tasks ready to get started.',icon:'○'},
+    'in-progress':{title:'In Progress',sub:'Currently being worked on.',icon:'◔'},
+    'completed':{title:'Completed',sub:'Finished work and closed loops.',icon:'✓'}
+  };
+  let queued=false;
+  const esc=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const eq=(a,b)=>String(a)===String(b);
+  function task(id){return (state.entries||[]).find(x=>eq(x.id,id))}
+  function projectName(t){return (state.life?.projects||[]).find(p=>eq(p.id,t.projectId))?.name||''}
+  function dateText(t){if(!t.date)return 'No due date';try{return typeof formatDateKeyLocal==='function'?formatDateKeyLocal(t.date):new Date(t.date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}catch(_){return t.date}}
+  function categoryText(t){const raw=(typeof catLabels!=='undefined'&&catLabels[t.category])||t.category||'Task';return String(raw).replace(/^\S+\s+/,'')}
+  function openNew(status){try{window.resetTaskForm?.()}catch(_){ }const s=document.getElementById('task-status');if(s)s.value=status;try{window.openModal?.('task-modal')}catch(_){document.getElementById('task-modal')?.classList.add('active')}}
+  function showOnly(status){const s=document.getElementById('filter-status');if(!s)return;s.value=status;try{window.renderTasks?.()}catch(_){s.dispatchEvent(new Event('change',{bubbles:true}))}}
+  function showAll(){const s=document.getElementById('filter-status');if(!s)return;s.value='all';try{window.renderTasks?.()}catch(_){s.dispatchEvent(new Event('change',{bubbles:true}))}}
+  function menu(){let m=document.getElementById('omni-task-board-menu');if(!m){m=document.createElement('div');m.id='omni-task-board-menu';document.body.appendChild(m)}return m}
+  function closeMenu(){document.getElementById('omni-task-board-menu')?.classList.remove('open')}
+  function openColumnMenu(btn,status){const m=menu(),meta=META[status]||META.todo;m.innerHTML=`<button data-board-menu="add">＋ Add task to ${esc(meta.title)}</button><button data-board-menu="only">◉ Show only ${esc(meta.title)}</button><button data-board-menu="all">◎ Show all statuses</button>`;m.querySelector('[data-board-menu="add"]').onclick=()=>{closeMenu();openNew(status)};m.querySelector('[data-board-menu="only"]').onclick=()=>{closeMenu();showOnly(status)};m.querySelector('[data-board-menu="all"]').onclick=()=>{closeMenu();showAll()};const r=btn.getBoundingClientRect();m.classList.add('open');m.style.left='0';m.style.top='0';const mr=m.getBoundingClientRect();m.style.left=Math.max(8,Math.min(r.right-mr.width,innerWidth-mr.width-8))+'px';m.style.top=Math.max(8,Math.min(r.bottom+5,innerHeight-mr.height-8))+'px'}
+  function openCardMenu(btn,t){const m=menu();m.innerHTML='<button data-card-menu="open">↗ Open details</button><button data-card-menu="edit">✎ Edit task</button><button data-card-menu="todo">○ Move to To Do</button><button data-card-menu="progress">◔ Move to In Progress</button><button data-card-menu="done">✓ Move to Completed</button>';m.querySelector('[data-card-menu="open"]').onclick=()=>{closeMenu();window.openInspector?.(t.id)};m.querySelector('[data-card-menu="edit"]').onclick=()=>{closeMenu();window.editTask?.(t.id)};const move=(st)=>{closeMenu();if(window.OmniTaskDnd56?.move)window.OmniTaskDnd56.move(t.id,st)};m.querySelector('[data-card-menu="todo"]').onclick=()=>move('todo');m.querySelector('[data-card-menu="progress"]').onclick=()=>move('in-progress');m.querySelector('[data-card-menu="done"]').onclick=()=>move('completed');const r=btn.getBoundingClientRect();m.classList.add('open');m.style.left='0';m.style.top='0';const mr=m.getBoundingClientRect();m.style.left=Math.max(8,Math.min(r.right-mr.width,innerWidth-mr.width-8))+'px';m.style.top=Math.max(8,Math.min(r.bottom+5,innerHeight-mr.height-8))+'px'}
+  function decorateColumn(col,index){
+    const status=col.dataset.taskStatus||['todo','in-progress','completed'][index];if(!status)return;col.dataset.taskStatus=status;
+    const meta=META[status]||META.todo,cards=[...col.querySelectorAll('.kanban-cards > .kanban-card[data-entry-id]')];
+    const h=col.querySelector('.kanban-col-header');if(h){const sig=status+'|'+cards.length;if(h.dataset.premiumSig!==sig){h.dataset.premiumSig=sig;h.innerHTML=`<div class="premium-status-icon">${esc(meta.icon)}</div><div class="premium-status-copy"><div class="premium-status-title-row"><span class="premium-status-title">${esc(meta.title)}</span><span class="premium-status-count">${cards.length}</span></div><div class="premium-status-sub">${esc(meta.sub)}</div></div><div class="premium-status-actions"><button type="button" class="premium-status-action" data-premium-add="${status}" aria-label="Add task to ${esc(meta.title)}">＋</button><button type="button" class="premium-status-action" data-premium-col-menu="${status}" aria-label="${esc(meta.title)} options">•••</button></div>`;h.querySelector('[data-premium-add]').onclick=e=>{e.stopPropagation();openNew(status)};h.querySelector('[data-premium-col-menu]').onclick=e=>{e.stopPropagation();openColumnMenu(e.currentTarget,status)}}}
+    const zone=col.querySelector('.kanban-cards');if(zone&&!zone.querySelector('.premium-drop-slot'))zone.insertAdjacentHTML('beforeend',`<div class="premium-drop-slot" aria-hidden="true"><span>＋</span><strong>Drop tasks here</strong><small>Move task to ${esc(meta.title)}</small></div>`);
+    cards.forEach(c=>decorateCard(c,status));
+  }
+  function decorateCard(card,status){
+    const t=task(card.dataset.entryId);if(!t)return;
+    const pr=(['high','medium','low'].includes(t.importance)?t.importance:'medium'),proj=projectName(t),ctx=t.context||'',desc=String(t.notes||'').trim(),cat=categoryText(t),leading=status==='completed'?'✓':'▤';
+    card.classList.add('premium-task-card');card.dataset.premiumStatus=status;
+    const chips=[cat?`<span class="premium-task-chip category">${esc(cat)}</span>`:'',proj?`<span class="premium-task-chip project">${esc(proj)}</span>`:'',ctx?`<span class="premium-task-chip context">${esc(ctx)}</span>`:''].filter(Boolean).join('');
+    const sig=[status,t.title||'',desc,pr,cat,proj,ctx,t.date||''].join('|');
+    if(card.dataset.premiumSig===sig)return;
+    card.dataset.premiumSig=sig;
+    card.innerHTML=`<div class="premium-card-top"><span class="premium-card-leading">${leading}</span><div class="premium-card-heading"><div class="premium-card-title">${esc(t.title||'Untitled task')}</div></div><button type="button" class="premium-card-menu" data-no-open data-premium-task-menu="${esc(t.id)}" aria-label="Task options">•••</button></div>${desc?`<div class="premium-card-description">${esc(desc)}</div>`:''}${chips?`<div class="premium-card-tags">${chips}</div>`:''}<div class="premium-card-footer"><span class="premium-card-date"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>${esc(dateText(t))}</span><span class="premium-priority ${pr}">${esc(pr)}</span></div>`;
+    const b=card.querySelector('[data-premium-task-menu]');if(b)b.onclick=e=>{e.preventDefault();e.stopPropagation();openCardMenu(b,t)};
+  }
+  function enhance(){
+    if(typeof currentTaskView!=='undefined'&&currentTaskView!=='kanban')return;
+    const board=document.querySelector('#view-tasks #tasks-content .kanban-board');if(!board)return;
+    [...board.querySelectorAll(':scope > .kanban-col')].forEach(decorateColumn);
+    window.OmniTaskDnd56?.enhance?.();
+  }
+  function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance()})}
+  const host=document.getElementById('tasks-content');if(host)new MutationObserver(ms=>{if(ms.some(m=>m.addedNodes.length||m.removedNodes.length))schedule()}).observe(host,{childList:true,subtree:true});
+  document.addEventListener('click',e=>{if(!e.target.closest('#omni-task-board-menu,[data-premium-col-menu],[data-premium-task-menu]'))closeMenu()},true);
+  window.addEventListener('resize',closeMenu);document.addEventListener('scroll',closeMenu,true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
+  const oldSwitch=window.switchView;if(typeof oldSwitch==='function'&&!oldSwitch.__premiumTaskBoard56){const f=function(v){const r=oldSwitch.apply(this,arguments);if(v==='tasks')setTimeout(schedule,0);return r};f.__premiumTaskBoard56=true;window.switchView=f}
+  schedule();setTimeout(schedule,150);
+  window.OmniPremiumTaskBoard56={enhance,openNew};
+})();
+</script>
+
+
+<!-- ===== Second Brain v57.2 — Native Bible Text Reader ===== -->
+<style id="omnios-v571-bible-css">
+/* Second Brain v57.1 — stable, isolated Bible & Meditation UI */
+#view-bible{min-width:0;--bib-accent:#d3a55e;--bib-accent-soft:rgba(211,165,94,.12);--bib-blue:#7aa7ff;--bib-green:#72d5a5;--bib-rose:#ed9aae;--bib-violet:#ab98ef}
+#view-bible *{box-sizing:border-box}
+.bib-shell{display:flex;flex-direction:column;gap:12px;min-width:0;max-width:100%}
+.bib-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px;border:1px solid var(--border-color);border-radius:14px;background:var(--bg-surface);min-width:0}
+.bib-title-wrap{min-width:0}.bib-eyebrow{font-size:.58rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--bib-accent)}
+.bib-title{margin:3px 0 4px;font-size:1.25rem;line-height:1.2}.bib-subtitle{font-size:.68rem;line-height:1.5;color:var(--text-muted);max-width:720px}
+.bib-top-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.bib-source-chip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:5px 8px;border:1px solid var(--border-color);border-radius:999px;background:var(--bg-base);font-size:.6rem;color:var(--text-secondary)}
+.bib-dot{width:7px;height:7px;border-radius:50%;background:var(--accent-yellow)}.bib-dot.ready{background:var(--accent-green)}
+.bib-tabs{display:flex;gap:4px;padding:4px;border:1px solid var(--border-color);border-radius:11px;background:var(--bg-surface);overflow-x:auto;scrollbar-width:none}.bib-tabs::-webkit-scrollbar{display:none}
+.bib-tab{border:0;background:transparent;color:var(--text-muted);padding:8px 11px;border-radius:8px;white-space:nowrap;font:inherit;font-size:.68rem;font-weight:700;cursor:pointer}.bib-tab:hover{background:var(--bg-elevated);color:var(--text-primary)}.bib-tab.active{background:var(--bib-accent-soft);color:var(--text-primary);box-shadow:inset 0 0 0 1px rgba(211,165,94,.3)}
+.bib-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.bib-kpi,.bib-card{border:1px solid var(--border-color);border-radius:12px;background:var(--bg-surface);min-width:0}.bib-kpi{padding:12px}.bib-kpi-label{font-size:.55rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}.bib-kpi-value{font-size:1.15rem;font-weight:800;margin-top:4px}.bib-kpi-meta{font-size:.58rem;color:var(--text-muted);margin-top:2px;line-height:1.4}
+.bib-card{padding:14px}.bib-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}.bib-card-title{font-size:.8rem;font-weight:800}.bib-card-sub{font-size:.6rem;color:var(--text-muted);line-height:1.45;margin-top:3px}
+.bib-two{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:10px;min-width:0}.bib-today{border:1px solid rgba(211,165,94,.34);border-radius:13px;background:linear-gradient(145deg,rgba(211,165,94,.10),var(--bg-surface));padding:17px;min-width:0}.bib-day{font-size:.56rem;color:var(--bib-accent);font-weight:800;letter-spacing:.09em;text-transform:uppercase}.bib-ref{font-family:Georgia,'Times New Roman',serif;font-size:1.25rem;font-weight:700;margin-top:7px}.bib-theme{font-size:.65rem;color:var(--text-secondary);margin-top:4px}.bib-question{font-size:.72rem;color:var(--text-secondary);line-height:1.58;margin:13px 0}.bib-actions{display:flex;gap:7px;flex-wrap:wrap}
+.bib-progress{height:6px;border-radius:999px;background:var(--bg-hover);overflow:hidden;margin-top:11px}.bib-progress>i{display:block;height:100%;background:var(--bib-accent);border-radius:999px}
+.bib-mood-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.bib-mood{border:1px solid var(--border-color);border-radius:9px;background:var(--bg-base);padding:9px;text-align:left;color:var(--text-secondary);font:inherit;cursor:pointer;min-width:0}.bib-mood:hover,.bib-mood.active{border-color:rgba(211,165,94,.48);background:var(--bib-accent-soft);color:var(--text-primary)}.bib-mood-icon{font-size:.95rem}.bib-mood-name{font-size:.61rem;font-weight:750;margin-top:4px;overflow:hidden;text-overflow:ellipsis}
+.bib-list{display:flex;flex-direction:column;gap:6px}.bib-row{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--border-color);border-radius:9px;background:var(--bg-base);min-width:0}.bib-row-main{flex:1;min-width:0}.bib-row-title{font-size:.68rem;font-weight:760;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bib-row-meta{font-size:.56rem;color:var(--text-muted);margin-top:2px;line-height:1.35}.bib-empty{padding:20px 12px;text-align:center;color:var(--text-muted);font-size:.65rem;border:1px dashed var(--border-color);border-radius:10px}
+.bib-reader{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:10px;min-width:0;align-items:start}.bib-reader-main{min-width:0}.bib-reader-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;padding:9px;border:1px solid var(--border-color);border-radius:10px;background:var(--bg-surface)}.bib-reader-toolbar .form-select{width:auto;min-width:120px}.bib-reader-toolbar .bib-chapter{min-width:82px}.bib-grow{flex:1}
+.bib-pdf{min-height:600px;border:1px solid var(--border-color);border-radius:11px;background:var(--bg-surface);overflow:hidden;position:relative}.bib-pdf iframe{display:block;width:100%;height:min(73vh,820px);border:0;background:white}.bib-pdf-empty{min-height:590px;display:grid;place-items:center;padding:24px;text-align:center}.bib-pdf-empty>div{max-width:520px}.bib-pdf-empty h3{margin:0 0 6px;font-size:.95rem}.bib-pdf-empty p{margin:0 0 13px;font-size:.67rem;line-height:1.55;color:var(--text-muted)}
+.bib-side{position:sticky;top:8px}.bib-page-map{padding:8px;border-radius:8px;background:var(--bg-base);font-size:.58rem;line-height:1.45;color:var(--text-muted);margin-bottom:10px}.bib-color-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.bib-color{width:27px;height:27px;border-radius:7px;border:2px solid transparent;cursor:pointer}.bib-color.active{border-color:var(--text-primary);box-shadow:0 0 0 2px var(--bg-surface)}.bib-color[data-color="gold"]{background:#f3d78b}.bib-color[data-color="blue"]{background:#8ab5ff}.bib-color[data-color="green"]{background:#8dddb9}.bib-color[data-color="rose"]{background:#f0a5b7}.bib-color[data-color="violet"]{background:#b5a5ef}
+.bib-timer-layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:10px;min-width:0}.bib-timer-card{text-align:center}.bib-ring{width:164px;height:164px;border-radius:50%;margin:8px auto 12px;display:grid;place-items:center;background:conic-gradient(var(--bib-accent) var(--bib-timer-pct,0%),var(--bg-elevated) 0);position:relative}.bib-ring:after{content:'';position:absolute;inset:9px;border-radius:50%;background:var(--bg-surface)}.bib-ring-in{position:relative;z-index:1}.bib-time{font-size:1.85rem;font-weight:850;font-variant-numeric:tabular-nums}.bib-phase{font-size:.6rem;color:var(--bib-accent);font-weight:800;margin-top:2px}.bib-presets{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin:8px 0 10px}.bib-presets .active{border-color:var(--bib-accent);color:var(--text-primary)}
+.bib-steps{display:flex;flex-direction:column;gap:6px;text-align:left;margin-top:11px}.bib-step{display:grid;grid-template-columns:25px 1fr;gap:8px;padding:8px;border:1px solid var(--border-color);border-radius:9px;background:var(--bg-base)}.bib-step.active{border-color:rgba(211,165,94,.45);background:var(--bib-accent-soft)}.bib-step-num{width:24px;height:24px;border-radius:50%;background:var(--bg-elevated);display:grid;place-items:center;font-size:.58rem;font-weight:800}.bib-step-title{font-size:.65rem;font-weight:800}.bib-step-copy{font-size:.57rem;line-height:1.45;color:var(--text-muted);margin-top:2px}.bib-focus .bib-top,.bib-focus .bib-tabs{display:none}.bib-focus .bib-timer-layout{grid-template-columns:minmax(310px,.7fr) minmax(0,1.3fr)}
+.bib-plan-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.bib-plan-progress-copy{display:flex;align-items:center;gap:7px;font-size:.62rem;color:var(--text-muted);white-space:nowrap}.bib-plan-progress-copy strong{font-size:.82rem;color:var(--text-primary)}
+.bib-plan-calnav{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto minmax(132px,auto);gap:7px;align-items:center;margin:12px 0 9px}.bib-plan-calnav .btn{justify-content:center}.bib-plan-month-title{text-align:center;font-family:Georgia,'Times New Roman',serif;font-size:1rem;font-weight:750;min-width:0}.bib-plan-month-select{width:auto;min-width:132px}
+.bib-plan-calendar-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border-color);border-radius:12px;background:var(--bg-base)}
+.bib-plan-calendar{display:grid;grid-template-columns:repeat(7,minmax(105px,1fr));min-width:735px}
+.bib-plan-weekday{padding:8px 7px;text-align:center;font-size:.56rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);background:var(--bg-elevated);border-right:1px solid var(--border-color);border-bottom:1px solid var(--border-color)}.bib-plan-weekday:nth-child(7){border-right:0}
+.bib-plan-cell{position:relative;min-height:118px;padding:8px;border-right:1px solid var(--border-color);border-bottom:1px solid var(--border-color);background:var(--bg-surface);cursor:pointer;min-width:0;transition:background .14s ease,box-shadow .14s ease}.bib-plan-cell:nth-child(7n){border-right:0}.bib-plan-cell:hover{background:color-mix(in srgb,var(--bib-accent) 5%,var(--bg-surface))}.bib-plan-cell.done{background:rgba(114,213,165,.055)}.bib-plan-cell.today{box-shadow:inset 0 0 0 2px var(--bib-accent);z-index:1}.bib-plan-cell.empty{cursor:default;background:color-mix(in srgb,var(--bg-base) 88%,var(--bg-elevated));opacity:.42}.bib-plan-cell.leap{cursor:default;background:var(--bg-base)}
+.bib-plan-cell-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px}.bib-plan-date{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:.68rem;font-weight:850;color:var(--text-secondary);background:var(--bg-elevated)}.bib-plan-cell.today .bib-plan-date{background:var(--bib-accent);color:#21180b}.bib-plan-cell.done .bib-plan-date{color:var(--accent-green)}
+.bib-plan-check{width:23px;height:23px;border-radius:7px;border:1px solid var(--border-color);display:grid;place-items:center;font-size:.65rem;background:var(--bg-base);color:var(--text-muted);cursor:pointer}.bib-plan-check:hover{border-color:var(--bib-accent)}.bib-plan-cell.done .bib-plan-check{background:var(--accent-green);color:#04150c;border-color:transparent}
+.bib-plan-ref{font-family:Georgia,'Times New Roman',serif;font-size:.7rem;font-weight:750;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.bib-plan-sub{font-size:.55rem;color:var(--text-muted);margin-top:5px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.bib-plan-daynum{font-size:.5rem;color:var(--bib-accent);font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-top:7px}.bib-plan-leap-copy{font-size:.56rem;color:var(--text-muted);line-height:1.4;margin-top:7px}
+@media(max-width:760px){.bib-plan-calnav{grid-template-columns:auto 1fr auto}.bib-plan-month-select{grid-column:1/-1;width:100%}.bib-plan-calendar{grid-template-columns:repeat(7,minmax(96px,1fr));min-width:672px}.bib-plan-cell{min-height:110px}}
+.bib-mood-layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:10px;min-width:0}.bib-all-moods{display:grid;grid-template-columns:1fr 1fr;gap:6px}.bib-passage{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--border-color);border-radius:9px;background:var(--bg-base);margin-top:6px}.bib-passage-main{flex:1;min-width:0}.bib-passage-ref{font-family:Georgia,serif;font-size:.73rem;font-weight:700}.bib-passage-meta{font-size:.56rem;color:var(--text-muted);margin-top:2px}.bib-passage-actions{display:flex;gap:5px;flex-wrap:wrap}
+.bib-journal-layout{display:grid;grid-template-columns:minmax(300px,.75fr) minmax(0,1.25fr);gap:10px}.bib-journal-list{display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow:auto}.bib-journal-item{padding:10px;border:1px solid var(--border-color);border-radius:9px;background:var(--bg-base);cursor:pointer}.bib-journal-item.active{border-color:rgba(211,165,94,.48);background:var(--bib-accent-soft)}.bib-journal-item-title{font-size:.67rem;font-weight:760}.bib-journal-item-meta{font-size:.55rem;color:var(--text-muted);margin-top:2px}.bib-journal-item-copy{font-size:.59rem;color:var(--text-secondary);line-height:1.45;margin-top:5px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.bib-library-toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:9px}.bib-library-tabs{display:flex;gap:4px;flex-wrap:wrap}.bib-lib-tab{border:1px solid var(--border-color);border-radius:8px;background:var(--bg-base);color:var(--text-muted);padding:6px 8px;font:inherit;font-size:.59rem;cursor:pointer}.bib-lib-tab.active{border-color:rgba(211,165,94,.5);background:var(--bib-accent-soft);color:var(--text-primary)}.bib-library-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.bib-lib-item{padding:10px;border:1px solid var(--border-color);border-radius:9px;background:var(--bg-base);min-width:0}.bib-lib-ref{font-family:Georgia,serif;font-size:.72rem;font-weight:700}.bib-lib-meta{font-size:.54rem;color:var(--text-muted);margin-top:2px}.bib-lib-copy{font-size:.59rem;color:var(--text-secondary);line-height:1.45;margin-top:5px;white-space:pre-wrap}.bib-source-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:9px}.bib-status{padding:9px;border:1px solid var(--border-color);border-radius:9px;background:var(--bg-base)}.bib-status strong{display:block;font-size:.69rem}.bib-status span{display:block;font-size:.55rem;color:var(--text-muted);margin-top:2px;line-height:1.35}
+#bib-mini-timer{position:fixed;right:18px;bottom:20px;z-index:1200;display:none;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--border-color);border-radius:11px;background:var(--bg-surface);box-shadow:0 10px 28px rgba(0,0,0,.25);cursor:pointer}#bib-mini-timer.show{display:flex}.bib-mini-time{font-size:.72rem;font-weight:850;font-variant-numeric:tabular-nums}.bib-mini-phase{font-size:.53rem;color:var(--text-muted);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bib-nav-icon{width:18px;height:18px;display:grid;place-items:center;flex:none}.bib-nav-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:1100px){.bib-two,.bib-reader,.bib-timer-layout,.bib-journal-layout{grid-template-columns:1fr}.bib-side{position:static}.bib-mood-layout{grid-template-columns:1fr}.bib-all-moods{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:760px){.bib-top{padding:13px;flex-direction:column}.bib-top-actions{justify-content:flex-start;width:100%}.bib-kpis{grid-template-columns:1fr 1fr}.bib-mood-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.bib-all-moods{grid-template-columns:repeat(2,minmax(0,1fr))}.bib-library-grid,.bib-source-grid{grid-template-columns:1fr}.bib-reader-toolbar .form-select{min-width:0;flex:1}.bib-pdf{min-height:480px}.bib-pdf iframe{height:64dvh}#bib-mini-timer{right:10px;bottom:calc(72px + env(safe-area-inset-bottom))}.bib-passage{align-items:flex-start;flex-direction:column}.bib-passage-actions{width:100%}}
+
+/* v57.2 native Bible text reader */
+#view-bible .bib-native-reader{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;align-items:start;min-width:0}
+#view-bible .bib-native-main{min-width:0}
+#view-bible .bib-reader-toolbar{position:sticky;top:0;z-index:8;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg-surface) 92%,transparent)}
+#view-bible .bib-native-chapter{border:1px solid var(--border-color);border-radius:14px;background:var(--bg-surface);overflow:hidden}
+#view-bible .bib-native-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:18px 20px 13px;border-bottom:1px solid var(--border-color);background:linear-gradient(145deg,rgba(211,165,94,.07),transparent)}
+#view-bible .bib-native-book{font-family:Georgia,'Times New Roman',serif;font-size:1.35rem;font-weight:700}
+#view-bible .bib-native-meta{font-size:.58rem;color:var(--text-muted);margin-top:3px}
+#view-bible .bib-verses{padding:12px 16px 20px;max-width:900px;margin:auto}
+#view-bible .bib-verse-row{display:grid;grid-template-columns:34px minmax(0,1fr);gap:7px;padding:7px 8px;border-radius:8px;line-height:1.72;transition:background .12s,border-color .12s;scroll-margin-top:78px;border:1px solid transparent}
+#view-bible .bib-verse-row:hover{background:var(--bg-elevated)}
+#view-bible .bib-verse-row.selected{border-color:rgba(211,165,94,.45);background:rgba(211,165,94,.08)}
+#view-bible .bib-vnum{border:0;background:transparent;color:var(--text-muted);font:700 .58rem/1.8 ui-sans-serif,system-ui;cursor:pointer;padding:2px 4px;border-radius:6px;text-align:right}
+#view-bible .bib-vnum:hover{background:var(--bg-hover);color:var(--text-primary)}
+#view-bible .bib-vtext{font-family:Georgia,'Times New Roman',serif;font-size:var(--bib-font-size,1rem);color:var(--text-primary);min-width:0}
+#view-bible .bib-verse-row.hl-gold{background:rgba(243,215,139,.18)}
+#view-bible .bib-verse-row.hl-blue{background:rgba(138,181,255,.15)}
+#view-bible .bib-verse-row.hl-green{background:rgba(141,221,185,.15)}
+#view-bible .bib-verse-row.hl-rose{background:rgba(240,165,183,.15)}
+#view-bible .bib-verse-row.hl-violet{background:rgba(181,165,239,.15)}
+#view-bible .bib-verse-row.has-note .bib-vnum:after{content:'•';color:var(--bib-accent);margin-left:3px}
+#view-bible .bib-reader-side{position:sticky;top:68px}
+#view-bible .bib-ref-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%}
+#view-bible .bib-ref-tools .form-input{min-width:180px;flex:1}
+#view-bible .bib-search-panel{margin:0 0 8px;border:1px solid var(--border-color);border-radius:10px;background:var(--bg-surface);padding:9px;display:none}
+#view-bible .bib-search-panel.open{display:block}
+#view-bible .bib-search-results{display:grid;gap:5px;max-height:320px;overflow:auto;margin-top:8px}
+#view-bible .bib-search-hit{display:grid;grid-template-columns:minmax(100px,145px) 1fr;gap:8px;text-align:left;border:1px solid var(--border-color);background:var(--bg-base);border-radius:8px;padding:8px;color:var(--text-secondary);cursor:pointer;font:inherit}
+#view-bible .bib-search-hit:hover{border-color:rgba(211,165,94,.45);background:var(--bib-accent-soft)}
+#view-bible .bib-search-ref{font-size:.6rem;font-weight:800;color:var(--text-primary)}
+#view-bible .bib-search-copy{font-family:Georgia,serif;font-size:.63rem;line-height:1.45}
+#view-bible .bib-reader-controls{display:flex;gap:5px;align-items:center;margin-left:auto}
+#view-bible .bib-reader-controls .btn{min-width:30px;padding-left:8px;padding-right:8px}
+#view-bible .bib-passage-preview{padding:10px;border:1px solid var(--border-color);border-radius:9px;background:var(--bg-base);font-family:Georgia,serif;font-size:.72rem;line-height:1.65;max-height:190px;overflow:auto;margin-bottom:10px}
+#view-bible .bib-source-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:980px){#view-bible .bib-native-reader{grid-template-columns:1fr}#view-bible .bib-reader-side{position:static}.bib-source-grid{grid-template-columns:1fr!important}}
+@media(max-width:680px){#view-bible .bib-verses{padding:8px 6px 16px}#view-bible .bib-verse-row{grid-template-columns:28px 1fr;padding:7px 4px}#view-bible .bib-native-head{padding:14px!important}#view-bible .bib-reader-toolbar{position:static!important}#view-bible .bib-search-hit{grid-template-columns:1fr!important}#view-bible .bib-ref-tools{align-items:stretch!important}#view-bible .bib-ref-tools .form-input{width:100%}}
+
+</style>
+
+<style id="omnios-v574-bible-scroll-highlight-css">
+/* ===== Second Brain v57.4 — Bible scroll fade + stronger highlights ===== */
+/* Sticky reader controls should visually cover content, not let verses ghost through. */
+#view-bible .bib-reader-toolbar.v573{
+  position:sticky!important;
+  top:0!important;
+  z-index:40!important;
+  isolation:isolate;
+  overflow:visible!important;
+  background:color-mix(in srgb,var(--bg-surface) 99%,var(--bg-base) 1%)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.08)!important;
+  backdrop-filter:blur(18px) saturate(1.08)!important;
+  border-color:color-mix(in srgb,var(--border-color) 88%,transparent)!important;
+  box-shadow:0 7px 18px rgba(0,0,0,.07)!important;
+}
+#view-bible .bib-reader-toolbar.v573::after{
+  content:"";
+  position:absolute;
+  left:-2px;right:-2px;bottom:-32px;height:32px;
+  pointer-events:none;
+  z-index:50;
+  background:linear-gradient(to bottom,
+    color-mix(in srgb,var(--bg-surface) 98%,transparent) 0%,
+    color-mix(in srgb,var(--bg-surface) 82%,transparent) 28%,
+    color-mix(in srgb,var(--bg-surface) 42%,transparent) 62%,
+    transparent 100%);
+}
+/* Give the chapter a little breathing room below the fade so the first line never collides. */
+#view-bible .bib-native-chapter.v573{margin-top:6px}
+#view-bible .bib-verses.v573{position:relative}
+
+/* Real highlighter treatment: marker = clearly filled, side mark = restrained, underline = minimal. */
+#view-bible .bib-verse-row.v573[data-highlight="1"]{
+  --hl-fill:color-mix(in srgb,var(--hl-color,var(--bib-accent)) 46%,var(--bg-surface));
+  --hl-border:color-mix(in srgb,var(--hl-color,var(--bib-accent)) 68%,transparent);
+}
+#view-bible .bib-verse-row.v573.hl-style-marker[data-highlight="1"]{
+  background:var(--hl-fill)!important;
+  border-color:var(--hl-border)!important;
+  box-shadow:inset 4px 0 0 var(--hl-color,var(--bib-accent)),inset 0 0 0 1px color-mix(in srgb,var(--hl-color,var(--bib-accent)) 26%,transparent)!important;
+}
+#view-bible .bib-verse-row.v573.hl-style-marker[data-highlight="1"]:hover{
+  background:color-mix(in srgb,var(--hl-color,var(--bib-accent)) 54%,var(--bg-surface))!important;
+}
+#view-bible .bib-verse-row.v573.hl-style-marker[data-highlight="1"] .bib-vnum{
+  background:color-mix(in srgb,var(--hl-color,var(--bib-accent)) 74%,#ffffff)!important;
+  color:#201d17!important;
+  border-radius:7px;
+  min-width:26px;height:26px;
+  display:grid;place-items:center;
+  opacity:1!important;
+  font-weight:900!important;
+  margin-top:0!important;
+}
+#view-bible .bib-verse-row.v573.hl-style-marker[data-highlight="1"] .bib-highlight-purpose{
+  background:color-mix(in srgb,var(--hl-color,var(--bib-accent)) 34%,var(--bg-surface))!important;
+  color:var(--text-primary)!important;
+  border:1px solid color-mix(in srgb,var(--hl-color,var(--bib-accent)) 44%,transparent);
+}
+/* The side-mark option still carries a faint wash so the highlighted verse remains obvious. */
+#view-bible .bib-verse-row.v573.hl-style-soft[data-highlight="1"]{
+  background:color-mix(in srgb,var(--hl-color,var(--bib-accent)) 10%,var(--bg-surface))!important;
+  border-color:color-mix(in srgb,var(--hl-color,var(--bib-accent)) 24%,transparent)!important;
+  box-shadow:inset 4px 0 0 var(--hl-color,var(--bib-accent))!important;
+}
+#view-bible .bib-verse-row.v573.hl-style-underline[data-highlight="1"]{
+  background:color-mix(in srgb,var(--hl-color,var(--bib-accent)) 6%,var(--bg-surface))!important;
+}
+/* Selection remains visible on top of an existing highlight without washing the highlight out. */
+#view-bible .bib-verse-row.v573.selected[data-highlight="1"]{
+  outline:2px solid color-mix(in srgb,var(--hl-color,var(--bib-accent)) 72%,var(--text-primary));
+  outline-offset:2px;
+}
+/* Stronger swatches so the chosen marker color matches the page result. */
+#view-bible .bib-color.v573{box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
+#view-bible .bib-color.v573.active{box-shadow:0 0 0 2px var(--bg-surface),0 0 0 4px currentColor,inset 0 0 0 1px rgba(0,0,0,.18)}
+@media(max-width:680px){
+  #view-bible .bib-reader-toolbar.v573{position:sticky!important;top:0!important}
+  #view-bible .bib-reader-toolbar.v573::after{bottom:-22px;height:22px}
+}
+</style>
+<script type="application/json" id="omnios-niv-bible-data">{"translation":"New International Version","source":"lazy","books":[],"stats":{"books":66,"chapters":1189,"verses":31086}}</script>

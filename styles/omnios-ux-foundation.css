@@ -1,0 +1,235 @@
+/* OmniOS UX foundation v1 — opt-in tokens and components.
+   Loaded by the UX branch shell and copied into dist. Scoped .ux-* primitives
+   coexist with legacy pages without rewriting existing UI authority layers. */
+:root {
+  --ux-space-1:4px;--ux-space-2:8px;--ux-space-3:12px;--ux-space-4:16px;
+  --ux-space-5:20px;--ux-space-6:24px;--ux-space-8:32px;
+  --ux-radius-sm:8px;--ux-radius-md:12px;--ux-radius-lg:16px;
+  --ux-text-xs:12px;--ux-text-sm:14px;--ux-text-base:16px;
+  --ux-target:44px;
+  --ux-surface:var(--bg-surface,#18181b);
+  --ux-canvas:var(--bg-base,#0f0f11);
+  --ux-border:var(--border-color,#3f3f46);
+  --ux-text:var(--text-primary,#f4f4f5);
+  --ux-muted:var(--text-secondary,#a1a1aa);
+  --ux-accent:var(--accent-cyan,#06b6d4);
+}
+.ux-page{min-width:0;display:flex;flex-direction:column;gap:var(--ux-space-6)}
+.ux-page-header{display:flex;align-items:start;justify-content:space-between;flex-wrap:wrap;gap:var(--ux-space-4)}
+.ux-page-heading{min-width:0;display:grid;gap:var(--ux-space-1)}
+.ux-page-title{font-size:clamp(1.35rem,1.1rem + .6vw,1.75rem);line-height:1.22;font-weight:750;color:var(--ux-text);margin:0}
+.ux-page-subtitle{font-size:var(--ux-text-sm);line-height:1.5;color:var(--ux-muted);margin:0}
+.ux-page-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ux-space-2)}
+.ux-card{background:var(--ux-surface);border:1px solid var(--ux-border);border-radius:var(--ux-radius-lg);padding:var(--ux-space-5);min-width:0}
+.ux-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:var(--ux-space-2);min-width:0}
+.ux-field{display:grid;gap:var(--ux-space-2);min-width:0}
+.ux-field-label{font-size:var(--ux-text-sm);font-weight:600;color:var(--ux-text)}
+.ux-input{width:100%;max-width:100%;min-height:var(--ux-target);padding:var(--ux-space-2) var(--ux-space-3);font:inherit;font-size:var(--ux-text-base);color:var(--ux-text);background:var(--ux-canvas);border:1px solid var(--ux-border);border-radius:var(--ux-radius-sm)}
+.ux-button{display:inline-flex;align-items:center;justify-content:center;gap:var(--ux-space-2);min-height:var(--ux-target);padding:var(--ux-space-2) var(--ux-space-4);border-radius:var(--ux-radius-sm);font:inherit;font-size:var(--ux-text-sm);font-weight:650;cursor:pointer;border:1px solid var(--ux-border);color:var(--ux-text);background:var(--ux-surface)}
+.ux-button-primary{background:var(--ux-accent);border-color:var(--ux-accent);color:#061015}
+.ux-tablist{display:flex;gap:var(--ux-space-1);overflow-x:auto;scrollbar-width:thin}
+.ux-tab{min-height:var(--ux-target);padding:var(--ux-space-2) var(--ux-space-3);border:0;border-radius:var(--ux-radius-sm);background:transparent;color:var(--ux-muted);font:inherit;font-size:var(--ux-text-sm);white-space:nowrap;cursor:pointer}
+.ux-tab[aria-selected="true"]{background:var(--ux-surface);color:var(--ux-text);font-weight:700}
+:where(.ux-button,.ux-input,.ux-tab):focus-visible{outline:3px solid var(--ux-accent);outline-offset:2px}
+@media(max-width:760px){.ux-page{gap:var(--ux-space-4)}.ux-card{padding:var(--ux-space-4)}.ux-page-header{flex-direction:column;align-items:stretch}.ux-page-actions>.ux-button{flex:1}}
+@media(prefers-reduced-motion:reduce){.ux-page *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Shared production-shell bridge. These selectors target existing markup,
+   preserving existing JS listeners, IDs and state contracts. Zero !important. */
+:where(.main-content,.view-container,.view,.card,.toolbar,.topbar,.sidebar){min-width:0}
+:where(.topbar-actions,.toolbar-group,.page-header,.card-header){min-width:0}
+:where(.view-container) :where(img,svg,canvas){max-width:100%}
+/* Existing surface and border authority remains owned by the current theme. */
+:where(.nav-menu,.sidebar-footer){min-width:0}
+:where(.nav-item){border-radius:var(--ux-radius-sm)}
+:where(.topbar){gap:var(--ux-space-3)}
+:where(.topbar-title){line-height:1.3;overflow-wrap:anywhere}
+:where(.topbar-actions,.toolbar,.toolbar-group,.card-header){gap:var(--ux-space-2)}
+:where(.toolbar){border-radius:var(--ux-radius-md)}
+:where(.form-group,.form-row,.form-grid){min-width:0}
+:where(.form-input,.form-select,.form-textarea,.filter-select){max-width:100%;min-width:0}
+:where(.form-label,.form-group label){line-height:1.4}
+:where(.btn,.icon-btn,.view-btn,.nav-item,.form-input,.form-select,.form-textarea,.filter-select):focus-visible{
+  outline:2px solid var(--ux-accent);outline-offset:2px
+}
+:where(.btn,.icon-btn,.view-btn,.nav-item){-webkit-tap-highlight-color:transparent}
+@media(hover:none) and (pointer:coarse){
+  :where(.topbar-actions .btn,.toolbar .btn,.toolbar .view-btn,.toolbar .filter-select,.sidebar-footer .btn){min-height:var(--ux-target)}
+}
+@media(max-width:760px){
+  :where(.topbar-actions,.toolbar-group){max-width:100%}
+}
+
+/* Phase 01: page-header and tab compatibility, deliberately low specificity.
+   No legacy block is removed until visual geometry is compared. */
+:where(.v35-page-head,.v58-page-head,.omx-page-heading,.v38-finance-head,.sb-authority-head){
+  min-width:0;max-width:100%;
+}
+:where(.v35-page-actions,.v38-finance-head-actions){min-width:0;flex-wrap:wrap}
+:where(.v35-page-head,.v58-page-head,.omx-page-heading,.v38-finance-head) :where(h1,h2,h3,p){
+  overflow-wrap:break-word;
+}
+:where(.v35-segmented,.bib-tabs,.v38-month-nav){max-width:100%;min-width:0}
+:where(.v35-segmented,.bib-tabs) :where(button,[role="tab"]):focus-visible{
+  outline:2px solid var(--ux-accent);outline-offset:2px;
+}
+:where(.v35-page-actions,.v38-finance-head-actions) :where(button):focus-visible{
+  outline:2px solid var(--ux-accent);outline-offset:2px;
+}
+
+/* Phase 01 completion: compact Today attention panel, no hidden actions.
+   Keep both destinations and their existing event handlers. */
+@media (max-width:420px){
+  #view-today #v58-attention{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    align-items:center;
+  }
+  #view-today #v58-attention > strong,
+  #view-today #v58-attention > .v58-attention-copy{
+    grid-column:1/-1;min-width:0;overflow-wrap:anywhere;
+  }
+  #view-today #v58-attention > .btn{
+    min-width:0;width:100%;min-height:40px;
+    padding:8px 9px;text-align:center;justify-content:center;
+    white-space:normal;
+  }
+}
+
+/* Today exposes + Add in its topbar. Suppress the redundant global capture
+   FAB only on the active Today view, preserving Quick capture on other pages. */
+@media (max-width:760px){
+  html body:has(#view-today.active) #v55-capture-fab{display:none!important}
+}
+
+/* UX Phase 10.1 — unified, reversible design contract.
+   Existing theme variables remain authoritative; bridge names are aliases.
+   No legacy listeners, component IDs or stored preferences are altered. */
+:root{
+  --ux-space-0:0px;--ux-space-7:28px;--ux-space-10:40px;
+  --ux-radius-xs:6px;--ux-radius-xl:20px;--ux-radius-pill:999px;
+  --ux-text-2xs:11px;--ux-text-lg:18px;--ux-text-xl:24px;
+  --ux-leading-tight:1.25;--ux-leading-normal:1.5;
+  --ux-border-subtle:var(--border-light,var(--ux-border));
+  --ux-surface-raised:var(--bg-elevated,var(--ux-surface));
+  --ux-surface-hover:var(--bg-hover,var(--ux-surface-raised));
+  --ux-focus:var(--omx-focus,var(--ux-accent));
+  --ux-control-height:var(--ux-target);
+  --ux-nav-gap:var(--ux-space-2);
+  --ux-page-inline:var(--ux-space-5);
+  --ux-header-gap:var(--ux-space-4);
+}
+:where(.ux-button,.ux-tab,.ux-input,.ux-select,.ux-textarea){
+  box-sizing:border-box;min-width:0;
+}
+:where(.ux-button,.ux-tab){transition:background-color .14s ease,border-color .14s ease}
+.ux-button-secondary{background:var(--ux-surface-raised);border-color:var(--ux-border-subtle)}
+.ux-button-ghost{border-color:transparent;background:transparent}
+.ux-button-danger{color:var(--danger,#e06e6e);border-color:var(--ux-border-subtle);background:var(--ux-surface)}
+.ux-button:disabled,.ux-tab:disabled{opacity:.55;cursor:not-allowed}
+.ux-page-heading,.ux-page-actions,.ux-toolbar{max-width:100%}
+.ux-page-header :where(h1,h2,h3){line-height:var(--ux-leading-tight)}
+.ux-input:focus-visible,.ux-button:focus-visible,.ux-tab:focus-visible{outline-color:var(--ux-focus)}
+@media(max-width:760px){
+  :root{--ux-page-inline:var(--ux-space-4);--ux-header-gap:var(--ux-space-3)}
+  .ux-page-header{gap:var(--ux-header-gap)}
+  .ux-page-actions{width:100%}
+}
+@media(prefers-reduced-motion:reduce){:where(.ux-button,.ux-tab){transition:none}}
+
+/* UX Phase 10.3: opt-in inline validation feedback; no change to legacy fields. */
+.ux-field-feedback{display:block;margin:var(--ux-space-1) 0 var(--ux-space-2);font-size:var(--ux-text-xs);line-height:var(--ux-leading-normal);overflow-wrap:anywhere}
+.ux-field-feedback-error{color:var(--danger,var(--color-danger,#e99696))}
+:where(.ux-input,[data-ux-field])[aria-invalid="true"]{border-color:var(--danger,var(--color-danger,#e99696))}
+:where(.ux-input,[data-ux-field])[aria-invalid="true"]:focus-visible{outline-color:var(--danger,var(--color-danger,#e99696))}
+
+/* Phase 10.4 opt-in dialog. All legacy native dialogs remain unchanged. */
+.ux-dialog-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:var(--ux-space-4);background:rgba(0,0,0,.65)}
+.ux-dialog-panel{box-sizing:border-box;width:min(100%,460px);max-height:calc(100dvh - 32px);overflow-y:auto;background:var(--ux-surface);color:var(--ux-text);border:1px solid var(--ux-border);border-radius:var(--ux-radius-lg);padding:var(--ux-space-6);display:grid;gap:var(--ux-space-3);box-shadow:0 16px 48px rgba(0,0,0,.26)}
+.ux-dialog-heading{margin:0;font-size:var(--ux-text-xl);line-height:var(--ux-leading-tight);overflow-wrap:anywhere}
+.ux-dialog-description{margin:0;color:var(--ux-muted);font-size:var(--ux-text-sm);line-height:var(--ux-leading-normal);white-space:pre-wrap;overflow-wrap:anywhere}
+.ux-dialog-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:var(--ux-space-2);margin-top:var(--ux-space-2)}
+.ux-dialog-panel .ux-field-label{margin-top:var(--ux-space-2)}
+@media(max-width:760px){.ux-dialog-overlay{align-items:flex-end;padding:var(--ux-space-3) var(--ux-space-3) max(12px,env(safe-area-inset-bottom))}.ux-dialog-panel{padding:var(--ux-space-4);border-radius:var(--ux-radius-lg)}.ux-dialog-actions>.ux-button{flex:1;min-width:0}}
+
+/* Phase 10.5–10.7: consistent accessible component primitives.
+   Opt-in class selectors intentionally avoid overriding legacy screens. */
+.ux-stack{display:flex;flex-direction:column;gap:var(--ux-space-4);min-width:0}
+.ux-cluster{display:flex;align-items:center;flex-wrap:wrap;gap:var(--ux-space-2);min-width:0}
+.ux-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:var(--ux-space-4);min-width:0}
+.ux-form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:var(--ux-space-3);min-width:0}
+.ux-textarea,.ux-select{box-sizing:border-box;width:100%;max-width:100%;min-height:var(--ux-control-height);border-radius:var(--ux-radius-sm);padding:var(--ux-space-2) var(--ux-space-3);border:1px solid var(--ux-border);color:var(--ux-text);background:var(--ux-canvas);font:inherit;font-size:var(--ux-text-base)}
+.ux-field-hint{color:var(--ux-muted);font-size:var(--ux-text-xs);line-height:var(--ux-leading-normal)}
+.ux-button:is(:hover,:focus-visible):not(:disabled){border-color:var(--ux-focus)}
+.ux-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.ux-page :where(.ux-page-header,.ux-toolbar,.ux-card,.ux-form-row)>*{min-width:0}
+@media(max-width:760px){.ux-grid,.ux-form-row{grid-template-columns:minmax(0,1fr)}.ux-cluster>.ux-button{min-height:var(--ux-control-height)}}
+
+/* Phase 11 — Today editorial rhythm. Keep every action and widget visible;
+   rebalance hierarchy rather than deleting information or touching handlers. */
+@media(min-width:761px){
+ html body #view-today{--ux-today-edge:color-mix(in srgb,var(--ux-border,#353840) 60%,transparent)}
+ html body #view-today :is(.v58-page-head,.v35-page-head){padding-block:18px 24px;gap:22px}
+ html body #view-today :is(.v58-page-head,.v35-page-head) :is(h1,h2){font-size:clamp(34px,3vw,48px);font-weight:760;line-height:1.08;letter-spacing:-.045em}
+ html body #view-today :is(.v58-page-head,.v35-page-head) p{font-size:15px;line-height:1.6;opacity:.82}
+ html body #view-today #v58-attention{border-radius:16px;border-color:var(--ux-today-edge);background:color-mix(in srgb,var(--ux-surface,#191b22) 83%,transparent);padding:15px 20px;gap:12px}
+ html body #view-today #v58-attention :is(button,.btn){border-radius:10px}
+ html body #view-today :is(.card,.ux-card){border-color:var(--ux-today-edge);border-radius:17px;box-shadow:0 2px 15px rgba(0,0,0,.065)}
+ html body #view-today :is(.card,.ux-card) :is(h2,h3){letter-spacing:-.025em}
+ html body #view-today :is(.card,.ux-card):hover{border-color:color-mix(in srgb,var(--ux-accent,#9f85f9) 20%,var(--ux-border,#363843))}
+}
+@media(max-width:760px){
+ html body #view-today :is(.v58-page-head,.v35-page-head) :is(h1,h2){font-size:clamp(30px,8vw,39px);letter-spacing:-.04em;line-height:1.12}
+ html body #view-today :is(.card,.ux-card){border-radius:15px}
+}
+
+/* Phase 11.2 — restrained Today action language and dashboard metrics.
+   No elements are concealed: refine visual contrast and spacing only. */
+html body #view-today{
+ --ux11-accent:var(--accent-purple,var(--ux-accent,#a78bfa));
+ --ux11-border:color-mix(in srgb,var(--ux-border,#353943) 52%,transparent);
+}
+html body #view-today :is(.btn,button):not(.nav-item):not(.ux02-mobile-tab){
+ transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+html body #view-today :is(.btn,button):not(.nav-item):not(.ux02-mobile-tab):focus-visible{
+ outline:2px solid var(--ux11-accent);outline-offset:3px;
+}
+html body #view-today :is(.card,.ux-card) :is(strong,.stat-value,.metric-value){
+ font-variant-numeric:tabular-nums;letter-spacing:-.025em;
+}
+html body #view-today :is(.card,.ux-card) :is(p,.muted,.text-muted){
+ line-height:1.55;
+}
+@media(min-width:761px){
+ html body #view-today :is(.v58-page-head,.v35-page-head){max-width:100%;align-items:center}
+ html body #view-today :is(.v58-page-head,.v35-page-head) :is(button,.btn){border-radius:11px;min-height:42px}
+ html body #view-today :is(.card,.ux-card){transition:border-color .18s ease,box-shadow .18s ease}
+ html body #view-today :is(.card,.ux-card):hover{box-shadow:0 8px 28px rgba(0,0,0,.10)}
+}
+@media(max-width:760px){
+ html body #view-today #v58-attention{border-radius:14px;gap:9px}
+ html body #view-today :is(.card,.ux-card){min-width:0}
+}
+@media(prefers-reduced-motion:reduce){
+ html body #view-today :is(.btn,button,.card,.ux-card){transition:none}
+}
+
+/* Phase 12 — cohesive premium polish. Existing actions, DOM, and storage preserved. */
+html body #view-today{--ux12-glow:color-mix(in srgb,var(--ux-accent,#9f87fa) 12%,transparent)}
+html body #view-today :is(.card,.ux-card){background:color-mix(in srgb,var(--ux-surface,#191b22) 94%,transparent);border-color:color-mix(in srgb,var(--ux-border,#343945) 54%,transparent)}
+html body #view-today :is(.card,.ux-card):focus-within{border-color:color-mix(in srgb,var(--ux-accent,#a78bfa) 34%,var(--ux-border,#353943))}
+html body #view-today #v58-attention{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--ux-accent,#a78bfa) 52%,transparent)}
+html body #view-today :is(.v58-page-head,.v35-page-head) :is(h1,h2){text-wrap:balance}
+html body #view-today :is(.v58-page-head,.v35-page-head) :is(.btn,button){font-weight:650}
+html body #view-today :is(.card,.ux-card) :is(h2,h3){line-height:1.25}
+@media(min-width:1100px){
+ html body #view-today :is(.v58-page-head,.v35-page-head){padding-block:22px 28px}
+ html body #view-today :is(.card,.ux-card){border-radius:18px}
+}
+@media(max-width:760px){
+ html body #view-today :is(.card,.ux-card){padding-inline:clamp(12px,4vw,20px)}
+ html body #view-today #v58-attention{box-shadow:inset 2px 0 0 color-mix(in srgb,var(--ux-accent,#a78bfa) 52%,transparent)}
+}
+@media(prefers-reduced-motion:reduce){html body #view-today :is(.card,.ux-card){transition:none}}

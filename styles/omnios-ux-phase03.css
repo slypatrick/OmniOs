@@ -1,0 +1,348 @@
+/* OmniOS Phase 12 — Today, an editorial daily workspace.
+   One authoritative layer for the existing Phase 03 controls and Phase 35
+   actual renderer. No legacy action, card or secondary destination is hidden. */
+html #view-today.ux03-focus-mode #v58-today-intelligence{display:none!important}
+html body #view-today{
+  --today12-violet:var(--accent-purple,#a98dff);
+  --today12-lime:var(--accent-lime,#c2f267);
+  --today12-surface:var(--bg-surface,#1b1d23);
+  --today12-line:color-mix(in srgb,var(--border-color,#414451) 62%,transparent);
+  --today12-quiet:var(--text-secondary,#abb1bd);
+}
+html body #view-today .omr-day-hero.om3-today-hero{
+  position:relative;isolation:isolate;overflow:hidden;min-width:0;
+  padding:clamp(24px,3.1vw,46px) clamp(23px,3.1vw,44px)!important;
+  margin:0 0 12px!important;border:1px solid color-mix(in srgb,var(--today12-violet) 13%,transparent);
+  border-radius:24px!important;
+  background:radial-gradient(ellipse at 95% 3%,color-mix(in srgb,var(--today12-violet) 13%,transparent),transparent 49%),
+             linear-gradient(125deg,color-mix(in srgb,var(--today12-surface) 92%,var(--bg-base,#101115)),var(--today12-surface));
+  box-shadow:0 14px 50px rgba(0,0,0,.09);
+  /* Legacy v97 uses a late background shorthand: preserve the editorial gradient. */
+  background-image:radial-gradient(ellipse at 95% 3%,color-mix(in srgb,var(--today12-violet) 13%,transparent),transparent 49%),linear-gradient(125deg,color-mix(in srgb,var(--today12-surface) 92%,var(--bg-base,#101115)),var(--today12-surface))!important;
+  gap:clamp(12px,2vw,28px);align-items:center;
+}
+html body #view-today .om3-today-hero .omr-day-copy{min-width:0}
+html body #view-today .om3-today-hero .omr-eyebrow{
+  font-size:11px;letter-spacing:.15em;font-weight:760;color:var(--today12-quiet);
+}
+html body #view-today .om3-today-hero h3{
+  font-size:clamp(35px,4vw,56px)!important;line-height:1.06!important;
+  font-weight:790;letter-spacing:-.05em!important;margin:12px 0 10px!important;
+  text-wrap:balance;
+}
+html body #view-today .om3-today-hero p{
+  font-size:clamp(14px,1.08vw,16px);line-height:1.55;color:var(--today12-quiet);
+  margin:0;max-width:54ch;
+}
+html body #view-today .om3-today-hero .omr-day-hero-actions{
+  display:flex;flex-wrap:wrap;gap:9px;align-items:center;min-width:0;
+}
+html body #view-today .om3-today-hero .omr-day-hero-actions .btn{
+  min-height:44px;border-radius:12px!important;padding:10px 17px!important;
+  font-weight:700;white-space:nowrap;
+}
+html body #view-today #ux03-today-controls{
+  display:flex;align-items:center;justify-content:flex-start;
+  gap:10px;flex-wrap:wrap;min-width:0;
+  padding:3px 0 6px!important;margin:0 0 16px!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important;
+}
+/* This copy duplicates the hero. Retain it for assistive technology. */
+html body #view-today .ux03-command-intro{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);
+  white-space:nowrap;border:0;
+}
+html body #view-today .ux03-command-actions{
+  display:flex;align-items:center;flex:1 1 auto;flex-wrap:wrap;gap:7px;min-width:0;
+}
+html body #view-today .ux03-command{
+  min-height:38px;display:inline-flex;align-items:center;justify-content:center;
+  padding:8px 13px!important;font-size:12px;font-weight:680;
+  border-radius:999px!important;border:1px solid var(--today12-line)!important;
+  color:var(--today12-quiet);background:transparent!important;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease;
+}
+html body #view-today .ux03-command:hover{
+  background:color-mix(in srgb,var(--today12-violet) 10%,transparent)!important;
+  color:var(--text-primary);border-color:color-mix(in srgb,var(--today12-violet) 35%,var(--today12-line))!important;
+}
+html body #view-today .ux03-insights-toggle{
+  min-height:38px;border:0!important;background:transparent!important;
+  color:var(--today12-violet);border-radius:999px;padding:8px 11px!important;
+  font-size:12px;font-weight:720;margin-left:auto;
+}
+html body #view-today :is(.ux03-command,.ux03-insights-toggle):focus-visible{
+  outline:2px solid var(--today12-violet);outline-offset:3px;
+}
+html body #view-today .om3-daily-glance{
+  gap:12px!important;margin:0 0 14px!important;
+}
+html body #view-today .om3-daily-glance .omr-stat{
+  min-width:0;min-height:125px;padding:19px 20px!important;
+  border:1px solid var(--today12-line)!important;border-radius:17px!important;
+  background:color-mix(in srgb,var(--today12-surface) 93%,var(--bg-base,#111216))!important;
+  box-shadow:none!important;
+}
+html body #view-today .om3-daily-glance .omr-stat:nth-child(2){
+  background:color-mix(in srgb,var(--today12-lime) 4%,var(--today12-surface))!important;
+}
+html body #view-today .om3-daily-glance .omr-stat .omr-stat-value{
+  font-size:clamp(26px,2.1vw,34px);font-weight:780;letter-spacing:-.045em;
+  font-variant-numeric:tabular-nums;
+}
+html body #view-today #v58-attention{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  margin:0 0 20px!important;padding:9px 13px!important;
+  background:color-mix(in srgb,var(--today12-lime) 4%,var(--bg-base,#111216))!important;
+  border:1px solid color-mix(in srgb,var(--today12-lime) 20%,var(--today12-line))!important;
+  border-left:3px solid var(--today12-lime)!important;
+  border-radius:11px!important;
+}
+html body #view-today #v58-attention strong{font-size:12px;font-weight:740}
+html body #view-today #v58-attention .v58-attention-copy{
+  flex:1 1 220px;min-width:0;font-size:12px;color:var(--today12-quiet);
+}
+html body #view-today #v58-attention .btn{
+  min-height:34px!important;padding:6px 11px!important;font-size:11px;
+  border-radius:9px!important;
+}
+html body #view-today .om3-today-grid{gap:16px!important}
+html body #view-today .om3-today-grid :is(.omr-panel,.omr-feature){
+  border-radius:19px!important;border:1px solid var(--today12-line)!important;
+  padding:clamp(18px,1.65vw,26px)!important;
+  background:var(--today12-surface)!important;box-shadow:none!important;
+}
+html body #view-today .om3-today-grid .omr-panel h4,
+html body #view-today .om3-today-grid .omr-feature h4{
+  font-size:clamp(19px,1.35vw,23px);font-weight:750;
+  letter-spacing:-.035em;line-height:1.2;
+}
+html body #view-today .om3-today-grid .omr-eyebrow{
+  color:var(--today12-violet);font-weight:720;font-size:10px;letter-spacing:.13em;
+}
+html body #view-today .om3-today-grid .omr-empty,
+html body #view-today .om3-today-grid .v35-empty{
+  border-color:color-mix(in srgb,var(--today12-line) 54%,transparent)!important;
+  border-radius:13px!important;background:color-mix(in srgb,var(--bg-base,#101115) 52%,transparent)!important;
+}
+html body #view-today .om3-capture-panel{
+  background:radial-gradient(ellipse at 100% 0%,color-mix(in srgb,var(--today12-violet) 9%,transparent),transparent 70%),var(--today12-surface)!important;
+}
+html body #view-today .om3-capture-panel :is(input,textarea){
+  min-width:0;max-width:100%;border-radius:11px;
+}
+html #view-dashboard #ux03-dashboard-return{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:12px 16px;margin-bottom:14px;border:1px solid var(--omx-edge,var(--border-color));
+  border-radius:12px;background:var(--omx-card,var(--bg-surface));
+}
+html #view-dashboard .ux03-dashboard-copy{display:flex;flex-direction:column;gap:3px}
+html #view-dashboard .ux03-dashboard-heading{font-size:14px;font-weight:760}
+html #view-dashboard .ux03-dashboard-description{font-size:12px;color:var(--text-secondary)}
+html #view-dashboard .ux03-return-button{min-height:40px;border-radius:10px}
+@media(max-width:760px){
+  html body #view-today .omr-day-hero.om3-today-hero{
+    padding:22px 17px!important;border-radius:19px!important;gap:12px;
+    align-items:start;
+  }
+  html body #view-today .om3-today-hero h3{font-size:clamp(32px,8vw,43px)!important}
+  html body #view-today .om3-today-hero .omr-day-hero-actions .btn{min-height:43px}
+  html body #view-today #ux03-today-controls{gap:8px;margin-bottom:14px!important}
+  html body #view-today .ux03-command-actions{width:100%;gap:6px}
+  html body #view-today .ux03-command{flex:1 1 calc(50% - 6px);min-height:42px}
+  html body #view-today .ux03-insights-toggle{
+    margin-left:0;width:100%;min-height:42px;
+    background:color-mix(in srgb,var(--today12-violet) 7%,transparent)!important;
+  }
+  html body #view-today .om3-daily-glance{gap:8px!important}
+  html body #view-today .om3-daily-glance .omr-stat{
+    min-height:110px;padding:13px 14px!important;border-radius:14px!important;
+  }
+  html body #view-today #v58-attention{padding:11px!important}
+  html body #view-today #v58-attention .v58-attention-copy{flex:1 0 100%!important}
+  html body #view-today #v58-attention :is(#v58-attention-open,#v58-automation-open){
+    flex:0 1 auto!important;width:auto!important;min-width:105px!important;
+    max-width:calc(50% - 5px);min-height:40px!important;
+  }
+  html body #view-today .om3-today-grid :is(.omr-panel,.omr-feature){border-radius:15px!important;padding:16px!important}
+  /* Main Add slot in the Phase 02 dock already supports universal creation. */
+  html body #view-today #v35-today-add{display:none!important}
+}
+@media(max-width:370px){
+  html body #view-today .ux03-command{flex-basis:calc(50% - 6px);padding-inline:7px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html body #view-today :is(.ux03-command,.ux03-insights-toggle){transition:none}
+}
+
+
+/* Phase 18 — progressive disclosure for Today, Insights (Dashboard), and Inbox.
+   Hidden sections remain in the DOM, are restored by explicit buttons, and
+   keep their original event handlers, data, and persistence untouched. */
+html body :is(#view-today,#view-dashboard,#view-inbox) .ux18-collapsed-section{
+ display:none!important;
+}
+html body :is(#view-today,#view-dashboard,#view-inbox) .ux18-secondary-toggle,
+html body #view-today #ux18-today-more{
+ display:inline-flex;justify-content:center;align-items:center;
+ min-height:40px;padding:8px 12px!important;
+ border:1px solid color-mix(in srgb,var(--today12-violet,var(--accent-purple,#a98dff)) 35%,var(--border-color,#414551))!important;
+ border-radius:10px!important;
+ background:color-mix(in srgb,var(--accent-purple,#a98dff) 6%,var(--bg-surface,#1b1d23))!important;
+ color:var(--text-primary,#e9edf3)!important;
+ font:inherit;font-size:12px!important;font-weight:690!important;
+ white-space:nowrap;cursor:pointer;
+}
+html body :is(#view-today,#view-dashboard,#view-inbox)
+ :is(.ux18-secondary-toggle,#ux18-today-more):focus-visible{
+ outline:2px solid var(--accent-purple,#a98dff)!important;outline-offset:2px;
+}
+html body #view-today .omr-day-hero.om3-today-hero{
+ padding:clamp(15px,1.8vw,25px) clamp(17px,2vw,28px)!important;
+ margin-bottom:8px!important;border-radius:16px!important;
+ gap:10px!important;
+}
+html body #view-today .om3-today-hero h3{
+ font-size:clamp(26px,3vw,42px)!important;line-height:1.12!important;
+ margin:4px 0 4px!important;
+}
+html body #view-today .om3-today-hero p{font-size:13px;line-height:1.4}
+html body #view-today #ux03-today-controls{
+ gap:6px!important;margin-bottom:10px!important;padding:0!important;
+}
+html body #view-today .ux03-command-actions{gap:5px!important}
+html body #view-today .ux03-command{
+ min-height:38px;padding:7px 11px!important;
+ border-radius:9px!important;font-size:12px!important;
+}
+html body #view-today .ux03-insights-toggle{
+ margin-left:0;min-height:40px;padding:7px 10px!important;
+}
+html body #view-today #ux18-today-more{
+ border-color:var(--today12-line,var(--border-color,#414551))!important;
+}
+html body #view-today .om3-daily-glance{
+ gap:7px!important;margin:0 0 9px!important;
+}
+html body #view-today .om3-daily-glance .omr-stat{
+ min-height:76px!important;padding:11px 13px!important;
+ border-radius:12px!important;gap:2px!important;
+}
+html body #view-today .om3-daily-glance .omr-stat .omr-stat-value{
+ font-size:clamp(21px,1.75vw,27px)!important;
+}
+html body #view-today .om3-daily-glance .omr-stat small{
+ font-size:11px!important;line-height:1.25!important;
+}
+html body #view-today .om3-today-grid{gap:10px!important}
+html body #view-today .om3-today-grid :is(.omr-panel,.omr-feature){
+ padding:clamp(12px,1.3vw,19px)!important;
+ border-radius:13px!important;
+}
+html body #view-today .om3-today-grid :is(.omr-panel,.omr-feature) h4{
+ font-size:clamp(16px,1.25vw,20px)!important;
+ margin-block:2px 7px;
+}
+html body #view-today .om3-today-grid .omr-panel-head{margin-bottom:9px!important}
+html body #view-today #v58-attention{
+ margin-bottom:11px!important;padding:7px 10px!important;
+ border-radius:9px!important;
+}
+html body #view-dashboard #ux03-dashboard-return{
+ padding:9px 12px;margin-bottom:10px;gap:8px;
+ border-radius:11px;
+}
+html body #view-dashboard .ux03-dashboard-description{font-size:11px}
+html body #view-dashboard :is(.dashboard-header,.v35-page-head){
+ padding:12px 14px!important;margin-bottom:10px!important;
+ border-radius:13px!important;
+}
+html body #view-dashboard :is(.stats-row,.analytics-grid,.dashboard-grid){
+ gap:9px!important;
+}
+html body #view-inbox .v35-page-head{
+ gap:8px!important;margin-bottom:11px!important;
+}
+html body #view-inbox .v35-page-head h3{
+ font-size:clamp(19px,1.7vw,24px);margin:0 0 3px;
+}
+html body #view-inbox .v35-page-head .text-muted{
+ font-size:12px!important;line-height:1.35;
+}
+html body #view-inbox .v35-card{
+ padding:11px 12px!important;margin-bottom:9px!important;
+}
+html body #view-inbox .v35-list{
+ gap:7px!important;
+}
+html body #view-inbox .v35-list>.v35-row{
+ min-height:46px;padding:10px 12px!important;border-radius:10px!important;
+}
+html body #view-inbox .v35-inline-capture{gap:7px!important}
+html body #view-inbox :is(#v35-inbox-add,#v35-inbox-process){min-height:40px}
+@media(max-width:760px){
+ html body #view-today .omr-day-hero.om3-today-hero{
+   padding:13px 13px!important;gap:8px!important;border-radius:14px!important;
+ }
+ html body #view-today .om3-today-hero h3{
+   font-size:clamp(23px,6.4vw,31px)!important;margin:4px 0!important;
+ }
+ html body #view-today .om3-today-hero p{font-size:12px;line-height:1.4}
+ html body #view-today #ux03-today-controls{
+   display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+   gap:6px!important;margin-bottom:9px!important;
+ }
+ html body #view-today .ux03-command-actions{
+   grid-column:1/-1;display:flex;flex-wrap:nowrap!important;gap:5px!important;
+   max-width:100%;min-width:0;
+   overflow-x:auto;overscroll-behavior-x:contain;
+   scrollbar-width:none;
+ }
+ html body #view-today .ux03-command-actions::-webkit-scrollbar{display:none}
+ html body #view-today .ux03-command{
+   flex:1 0 auto!important;width:auto!important;
+   min-height:42px;padding:8px 10px!important;
+   font-size:12px!important;
+ }
+ html body #view-today .ux03-insights-toggle,
+ html body #view-today #ux18-today-more{
+   min-height:44px!important;
+   width:auto!important;margin:0!important;
+   border-radius:10px!important;padding:9px 10px!important;
+ }
+ html body #view-today #ux18-today-more{grid-column:2;grid-row:2}
+ html body #view-today .ux03-insights-toggle{grid-column:1;grid-row:2}
+ html body #view-today .om3-daily-glance{
+   display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+   gap:6px!important;
+ }
+ html body #view-today .om3-daily-glance .omr-stat{
+   min-height:69px!important;padding:9px 11px!important;
+ }
+ html body #view-today .om3-today-grid :is(.omr-panel,.omr-feature){
+   padding:12px!important;border-radius:11px!important;
+ }
+ html body #view-today .om3-today-grid :is(.omr-panel,.omr-feature) h4{font-size:16px!important}
+ html body #view-today #v58-attention{padding:8px 9px!important;gap:6px!important}
+ html body #view-today .om3-today-hero .omr-day-hero-actions .btn{min-height:43px!important}
+ html body #view-dashboard #ux03-dashboard-return{padding:9px 10px}
+ html body #view-dashboard .ux03-dashboard-copy{flex:1 1 135px}
+ html body #view-dashboard :is(.ux18-secondary-toggle,.ux03-return-button){min-height:44px!important}
+ html body #view-inbox .v35-page-head{
+   display:flex;align-items:stretch;gap:8px!important;
+ }
+ html body #view-inbox .v35-page-actions{width:100%;gap:7px}
+ html body #view-inbox .v35-page-actions :is(button){min-height:44px!important}
+ html body #view-inbox .v35-inline-capture :is(input,button){min-height:44px!important}
+}
+@media(max-width:370px){
+ html body #view-today .ux03-command{padding-inline:8px!important}
+ html body #view-today .ux03-insights-toggle,
+ html body #view-today #ux18-today-more{font-size:11px!important;padding-inline:8px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ html body :is(#view-today,#view-dashboard,#view-inbox) .ux18-secondary-toggle,
+ html body #view-today #ux18-today-more{transition:none!important}
+}

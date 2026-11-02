@@ -1,0 +1,44 @@
+import {JSDOM,VirtualConsole} from 'jsdom';
+import {indexedDB,IDBKeyRange} from 'fake-indexeddb';
+import {webcrypto} from 'node:crypto';import fs from 'node:fs';
+const dir='dist/',file=JSON.parse(fs.readFileSync(dir+'release.json')).file;
+const vc=new VirtualConsole();let errors=[];vc.on('jsdomError',e=>{if(e.type==='unhandled-exception'){errors.push(e.message);console.log(e.stack)}});vc.on('error',(...a)=>console.log('APP ERROR',...a));
+const dom=new JSDOM(fs.readFileSync(dir+file,'utf8'),{url:'https://example.org/OmniOS/',runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc,beforeParse(w){w.indexedDB=indexedDB;w.IDBKeyRange=IDBKeyRange;Object.defineProperty(w,'crypto',{value:webcrypto});w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.structuredClone=structuredClone;w.matchMedia=()=>({matches:false,addListener(){},removeListener(){},addEventListener(){},removeEventListener(){}});w.ResizeObserver=class{observe(){}disconnect(){}};w.IntersectionObserver=class{observe(){}disconnect(){}};w.scrollTo=()=>{};w.fetch=async()=>{throw Error('Offline smoke test')};w.alert=console.log;w.confirm=()=>false;}});
+await new Promise(r=>setTimeout(r,2500));console.log('TITLE',dom.window.document.title,'ERRORS',errors.length,'VAULT',!!dom.window.SecondBrainPasswords,'SYNC',!!dom.window.SecondBrainSync);if(!dom.window.SecondBrainPasswords||!dom.window.SecondBrainSync)throw Error('New modules did not initialize');
+const w=dom.window;w.eval("state.passwords=[{id:'test-login',site:'Synthetic test',password:'test-only-secret'}];saveState();SecondBrainPasswords.edit()");
+w.document.querySelector('#sb-vault-pass').value='synthetic-test-passphrase-123';w.document.querySelector('#sb-vault-confirm').value='synthetic-test-passphrase-123';w.document.querySelector('[data-unlock]').click();
+for(let i=0;i<200;i++){
+ const encrypted=w.eval('!!state.passwordVault && state.passwords.length===0');
+ const committed=!!w.localStorage.getItem('omnios_v3_state')&&!w.localStorage.getItem('omnios_v3_state').includes('test-only-secret');
+ const dialogClosed=!w.document.querySelector('#sb-vault-pass');
+ if(encrypted&&committed&&dialogClosed)break;
+ await new Promise(r=>setTimeout(r,100));
+}
+if(!w.eval('!!state.passwordVault')||w.eval('state.passwords.length')!==0||w.document.querySelector('#sb-vault-pass'))throw Error('Vault migration did not complete: '+w.document.querySelector('[data-error]')?.textContent);
+const saved=w.localStorage.getItem('omnios_v3_state');if(!saved||saved.includes('test-only-secret'))throw Error('Plaintext credentials persisted after completed migration');
+const unlocked=await w.SecondBrainCrypto.open(JSON.parse(saved).passwordVault,'synthetic-test-passphrase-123');if(unlocked.value[0].password!=='test-only-secret')throw Error('Migration lost credentials');
+w.SecondBrainPasswords.lock();console.log('Vault migration, encrypted persistence and unlock passed.');
+
+// Exercise real editor/search handlers against the assembled application.
+w.eval("state.notes.push({id:9001,title:'First note',contentHtml:'<p>First</p>',tags:['alpha'],type:'research',favorite:true},{id:9002,title:'Second note',contentHtml:'<p>Second</p>',tags:['beta'],type:'meeting',favorite:false});openNoteModal('9001')");
+if(w.document.getElementById('note-title').value!=='First note')throw Error('String note IDs must open existing numeric records');
+if(w.document.getElementById('org-note-tags-field').value!=='alpha')throw Error('First note metadata missing');
+const title=w.document.getElementById('note-title');title.value='Edited before closing';title.dispatchEvent(new w.Event('input',{bubbles:true}));
+w.closeModal('note-modal');
+if(JSON.parse(w.localStorage.getItem('omnios_v3_state')).notes.find(n=>n.id===9001).title!=='Edited before closing')throw Error('Closing note lost pending edits');
+w.openNoteModal('9002');
+if(w.document.getElementById('org-note-tags-field').value!=='beta'||w.document.getElementById('org-note-fav-field').dataset.on!=='0')throw Error('Previous note metadata leaked into next note');
+const tags=w.document.getElementById('org-note-tags-field');tags.value='changed';tags.dispatchEvent(new w.Event('input',{bubbles:true}));w.closeModal('note-modal');
+if(JSON.parse(w.localStorage.getItem('omnios_v3_state')).notes.find(n=>n.id===9002).tags[0]!=='changed')throw Error('Metadata-only edits did not save');
+w.switchView('notes');await new Promise(r=>setTimeout(r,250));
+const search=w.document.getElementById('org-note-search');search.focus();search.value='Edited';search.setSelectionRange(2,4);search.dispatchEvent(new w.Event('input',{bubbles:true}));
+const restored=w.document.getElementById('org-note-search');
+if(w.document.activeElement!==restored||restored.selectionStart!==2||restored.selectionEnd!==4)throw Error('Search redraw lost focus/caret');
+console.log('Note ID lookup, close-time save, metadata isolation, metadata autosave and search focus passed.');
+try{
+ const screens=[...w.document.querySelectorAll('.view[id^="view-"]')].map(el=>el.id.slice(5)).filter(Boolean);
+ if(screens.length<30)throw Error('Expected at least 30 application screens, found '+screens.length);
+ for(const screen of screens){w.switchView(screen);await new Promise(r=>setTimeout(r,15));if(!w.document.getElementById('view-'+screen)?.classList.contains('active'))throw Error('Navigation failed for '+screen)}
+ console.log('Navigation passed for '+screens.length+' screens.');
+}finally{dom.window.close()}
+if(errors.length)process.exitCode=1;
