@@ -23,6 +23,7 @@ const CORE=[
   './js/omnios-life-hub-phase06.js',
   './js/omnios-modules-phase07.js',
   './styles/omnios-ux-phase07.css',
+  './styles/omnios-ux-phase08.css',
   './js/omnios-capture-phase04.js'
 ];
 

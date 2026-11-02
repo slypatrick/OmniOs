@@ -1,0 +1,164 @@
+/* OmniOS Phase 08 — Calm UI refresh (loaded last).
+   Visual layer only: no markup, handlers or stored data are touched.
+   Goals: quieter navigation, one consistent card language, clearer hierarchy,
+   comfortable mobile spacing, subtle motion that respects reduced-motion. */
+
+:root{
+  --p8-surface:color-mix(in srgb,var(--bg-surface,#15181e) 92%,#fff 3%);
+  --p8-surface-2:color-mix(in srgb,var(--bg-elevated,#1e232b) 86%,var(--bg-surface,#15181e));
+  --p8-line:color-mix(in srgb,var(--border-color,#303743) 62%,transparent);
+  --p8-line-strong:color-mix(in srgb,var(--border-light,#46505e) 70%,transparent);
+  --p8-accent:#7c8cff;
+  --p8-accent-2:#a78bfa;
+  --p8-radius:16px;
+  --p8-radius-sm:11px;
+  --p8-ease:cubic-bezier(.22,.8,.3,1);
+  --p8-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 8px 24px rgba(0,0,0,.18);
+  --p8-dock-h:72px;
+}
+
+/* ---------- Global polish ---------- */
+html body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-feature-settings:"cv11","ss01"}
+html body ::selection{background:color-mix(in srgb,var(--p8-accent) 38%,transparent);color:#fff}
+html body{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--text-muted,#929aa7) 40%,transparent) transparent}
+html body ::-webkit-scrollbar{width:10px;height:10px}
+html body ::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--text-muted,#929aa7) 32%,transparent);border-radius:999px;border:3px solid transparent;background-clip:content-box}
+html body ::-webkit-scrollbar-thumb:hover{background-color:color-mix(in srgb,var(--text-muted,#929aa7) 55%,transparent)}
+
+html body :is(a,button,input,select,textarea,summary,[tabindex]):focus-visible{
+  outline:2px solid var(--p8-accent)!important;outline-offset:2px!important;
+  box-shadow:0 0 0 5px color-mix(in srgb,var(--p8-accent) 22%,transparent)!important;
+}
+
+/* Tabular numbers so KPIs and counters never jitter */
+html body :is(.omr-stat,.v35-stat,.v58-kpi,.om3-kpi,[class*="kpi"],[class*="stat"]) :is(strong,b,.value,[class*="value"]){
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+}
+
+/* Views ease in instead of popping */
+@keyframes p8-view-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+html body .view.active,html body .view[style*="display: block"]{animation:p8-view-in .28s var(--p8-ease) both}
+
+/* ---------- Buttons ---------- */
+html body .btn,html body button.btn{
+  transition:transform .15s var(--p8-ease),background-color .15s ease,border-color .15s ease,box-shadow .2s ease;
+}
+html body .btn:not(:disabled):active{transform:scale(.97)}
+html body .btn-primary{
+  background:linear-gradient(135deg,#4f6bff 0%,#8b5cf6 100%)!important;border:0!important;
+  box-shadow:0 6px 18px color-mix(in srgb,#6d5cf6 38%,transparent)!important;
+}
+html body .btn-primary:hover{filter:brightness(1.08);box-shadow:0 8px 24px color-mix(in srgb,#6d5cf6 46%,transparent)!important}
+
+/* ---------- Sidebar: quiet, flat, scannable ---------- */
+html body .sidebar{background:color-mix(in srgb,var(--bg-base,#0c0e12) 94%,#fff 2%)!important;border-right:1px solid var(--p8-line)!important}
+html body .sidebar .ux02-side-group,
+html body .sidebar .ux02-side-group+.ux02-side-group{
+  background:transparent!important;border:0!important;border-radius:0!important;
+  padding:0!important;margin:0 0 4px!important;box-shadow:none!important;
+}
+html body .sidebar .ux02-side-toggle{
+  background:transparent!important;border:0!important;border-radius:var(--p8-radius-sm)!important;
+  color:var(--text-secondary,#c8cdd5)!important;font-weight:650;letter-spacing:.01em;
+  transition:background-color .15s ease,color .15s ease!important;
+}
+html body .sidebar .ux02-side-toggle:is(:hover,:focus-visible){
+  background:color-mix(in srgb,var(--om16-group-accent,#a78bfa) 10%,transparent)!important;color:var(--text-primary,#f7f8fa)!important;
+}
+html body .sidebar .ux02-side-group.ux02-selected>.ux02-side-toggle,
+html body .sidebar .ux02-side-toggle.ux02-active{
+  background:transparent!important;color:var(--text-primary,#f7f8fa)!important;
+}
+html body .sidebar .ux02-side-links{
+  border-left:1px solid var(--p8-line)!important;margin-left:18px!important;padding:2px 0 6px 8px!important;
+}
+html body .sidebar .ux02-side-links>.nav-item{
+  border:0!important;border-radius:9px!important;color:var(--text-muted,#929aa7);
+  transition:background-color .15s ease,color .15s ease;
+}
+html body .sidebar .ux02-side-links>.nav-item:hover{background:color-mix(in srgb,#fff 6%,transparent)!important;color:var(--text-primary,#f7f8fa)}
+html body .sidebar .ux02-side-links>.nav-item.active,
+html body .sidebar.v101-sidebar .v101-nav-group .nav-item[data-view].active{
+  background:color-mix(in srgb,var(--om16-group-accent,var(--p8-accent)) 16%,transparent)!important;
+  color:var(--text-primary,#f7f8fa)!important;box-shadow:none!important;border:0!important;
+  position:relative;
+}
+html body .sidebar .ux02-side-links>.nav-item.active::before{
+  content:"";position:absolute;left:-9px;top:20%;bottom:20%;width:2px;border-radius:2px;
+  background:var(--om16-group-accent,var(--p8-accent));
+}
+
+/* ---------- Top bar ---------- */
+html body .top-bar,html body header.topbar,html body .main-header{
+  backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
+  background:color-mix(in srgb,var(--bg-base,#0c0e12) 78%,transparent)!important;
+  border-bottom:1px solid var(--p8-line)!important;
+}
+
+/* ---------- Cards: one language ---------- */
+html body #view-today .om3-today-grid :is(.omr-panel,.omr-feature),
+html body :is(.card,.v35-card,.omr-panel,.omr-feature,.v58-kpi,.omr-stat){
+  background:var(--p8-surface)!important;
+  border:1px solid var(--p8-line)!important;
+  border-radius:var(--p8-radius)!important;
+  box-shadow:var(--p8-shadow)!important;
+  transition:border-color .2s ease,transform .2s var(--p8-ease),box-shadow .2s ease;
+}
+@media (hover:hover){
+  html body :is(.card,.v35-card,.omr-panel,.omr-feature):hover{border-color:var(--p8-line-strong)!important}
+}
+html body #view-today .om3-today-grid .omr-panel h4,
+html body #view-today .om3-today-grid .omr-feature h4{letter-spacing:-.01em}
+html body #view-today .om3-today-grid .omr-eyebrow,
+html body .v35-kicker{letter-spacing:.09em;color:var(--p8-accent-2)!important}
+
+/* Empty states read as calm invitations, not errors */
+html body #view-today .om3-today-grid :is(.omr-empty,.v35-empty){
+  border:1px dashed var(--p8-line-strong)!important;border-radius:var(--p8-radius-sm)!important;
+  background:color-mix(in srgb,var(--p8-accent) 4%,transparent)!important;
+}
+
+/* ---------- Today layout ---------- */
+html body #view-today .om3-today-grid>.omr-day-right:not(:has(>:not(.ux18-collapsed-section))){display:none!important}
+html body #view-today .om3-today-grid>.omr-day-left{grid-column:1/-1}
+
+/* Hero: lighter, with a soft accent glow */
+html body #view-today header.omr-day-hero{
+  background:
+    radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--p8-accent) 14%,transparent),transparent 60%),
+    var(--p8-surface)!important;
+  border:1px solid var(--p8-line)!important;border-radius:calc(var(--p8-radius) + 4px)!important;
+}
+
+/* The “Add cover” affordance stays out of the way until wanted */
+html body .v44-page-cover-shell:not(:hover):not(:focus-within) :is(button,.btn,[role="button"]){
+  opacity:.45;transition:opacity .2s ease;
+}
+html body .v44-page-cover-shell:is(:hover,:focus-within) :is(button,.btn,[role="button"]){opacity:1}
+
+/* ---------- Toggles / chips ---------- */
+html body :is(.chip,.pill,.v35-segmented button,.v58-chip){
+  border-radius:999px!important;transition:background-color .15s ease,border-color .15s ease,color .15s ease;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width:760px){
+  /* content never hides behind the floating dock */
+  html body .main-content{padding-bottom:calc(var(--p8-dock-h) + 28px + env(safe-area-inset-bottom,0px))!important}
+  html body .ux02-mobile-nav{
+    background:color-mix(in srgb,var(--bg-surface,#15181e) 80%,transparent)!important;
+    backdrop-filter:saturate(1.5) blur(18px);-webkit-backdrop-filter:saturate(1.5) blur(18px);
+    border:1px solid var(--p8-line-strong)!important;
+    box-shadow:0 12px 32px rgba(0,0,0,.45)!important;
+  }
+  html body #view-today .om3-today-grid{grid-template-columns:minmax(0,1fr)!important}
+  html body :is(.omr-panel,.omr-feature,.v35-card){border-radius:14px!important}
+  html body .btn{min-height:44px}
+}
+
+/* ---------- Respect motion preferences ---------- */
+@media (prefers-reduced-motion:reduce){
+  html body *,html body *::before,html body *::after{
+    animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important;
+  }
+}
